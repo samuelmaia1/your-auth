@@ -21,6 +21,7 @@ API de autenticação para terceiros, criada para abstrair a lógica de autentic
 - Lombok
 - JUnit 5
 - Spring Boot Test
+- Docker
 
 ## Arquitetura
 
