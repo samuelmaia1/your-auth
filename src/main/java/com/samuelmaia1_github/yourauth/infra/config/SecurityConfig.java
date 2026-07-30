@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.infra.config;
 import com.samuelmaia1_github.yourauth.infra.security.SecurityFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,8 +26,12 @@ public class SecurityConfig {
         security
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 .authorizeHttpRequests(auth ->
-                    auth.anyRequest().authenticated()
+                    auth.requestMatchers("/h2-console/**").permitAll()
+                            .requestMatchers("/error").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/users/create").permitAll()
+                            .anyRequest().authenticated()
                 ).addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
 
         return security.build();
