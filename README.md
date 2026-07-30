@@ -38,21 +38,27 @@ src/main/java/com/samuelmaia1_github/yourauth
 │       └── exceptions
 │           └── UserException.java
 ├── infra
+│   ├── beans
 │   ├── config
 │   ├── exceptions
+│   ├── mappers
+│   ├── persistence
 │   ├── repository
-│   └── security
+│   ├── security
+│   ├── utils
+│   └── validation
 └── presentation
     ├── controller
     ├── dto
-    └── exception
+    ├── exception
+    └── mapper
 ```
 
 ### Camadas
 
 - `domain`: concentra entidades, services, policies e exceptions relacionadas às regras de negócio.
-- `infra`: concentra configurações, segurança, repositórios e exceptions de infraestrutura.
-- `presentation`: concentra controllers, DTOs e handlers de exception da API.
+- `infra`: concentra beans, configurações, segurança, persistence, repositórios, mappers, utils, validações e exceptions de infraestrutura.
+- `presentation`: concentra controllers, DTOs, mappers e handlers de exception da API.
 
 > Observação: a estrutura acima representa a arquitetura planejada. No estado atual, o projeto ainda possui apenas a classe principal da aplicação e a configuração básica.
 
