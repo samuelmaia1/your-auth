@@ -1,0 +1,20 @@
+CREATE TABLE users (
+    id VARCHAR(36) NOT NULL,
+    email VARCHAR(320) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    phone_ddd VARCHAR(2),
+    phone_number VARCHAR(20),
+    address_postal_code VARCHAR(20),
+    address_street VARCHAR(255),
+    address_number VARCHAR(30),
+    address_neighborhood VARCHAR(120),
+    address_city VARCHAR(120),
+    address_state VARCHAR(120),
+    address_country VARCHAR(120),
+    cpf VARCHAR(11) NOT NULL,
+    CONSTRAINT pk_users PRIMARY KEY (id),
+    CONSTRAINT uk_users_email UNIQUE (email),
+    CONSTRAINT uk_users_cpf UNIQUE (cpf)
+);
