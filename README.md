@@ -60,7 +60,7 @@ src/main/java/com/samuelmaia1_github/yourauth
 - `infra`: concentra beans, configurações, segurança, persistence, repositórios, mappers, utils, validações e exceptions de infraestrutura.
 - `presentation`: concentra controllers, DTOs, mappers e handlers de exception da API.
 
-> Observação: a estrutura acima representa a arquitetura planejada. No estado atual, o projeto ainda possui apenas a classe principal da aplicação e a configuração básica.
+> Observação: a estrutura acima representa a arquitetura planejada. No estado atual, os packages foram materializados com `package-info.md`, mas ainda não possuem implementações funcionais.
 
 ## Como rodar o projeto
 
