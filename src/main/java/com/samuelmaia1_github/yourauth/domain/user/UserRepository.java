@@ -13,5 +13,7 @@ public interface UserRepository {
 
     Optional<User> findByCPF(CPF cpf);
 
+    Optional<User> findByEmailIgnoreCaseOrCPF(String email, CPF cpf);
+
     void deleteById(String id);
 }

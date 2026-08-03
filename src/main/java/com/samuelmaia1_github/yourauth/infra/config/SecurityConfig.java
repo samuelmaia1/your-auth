@@ -31,6 +31,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/h2-console/**").permitAll()
                             .requestMatchers("/error").permitAll()
                             .requestMatchers(HttpMethod.POST, "/users/create").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .anyRequest().authenticated()
                 ).addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
 

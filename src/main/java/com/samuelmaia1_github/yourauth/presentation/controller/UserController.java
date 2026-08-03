@@ -2,8 +2,8 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
-import com.samuelmaia1_github.yourauth.presentation.dto.CreateUserDTO;
-import com.samuelmaia1_github.yourauth.presentation.dto.UserResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.UserPresentationMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
