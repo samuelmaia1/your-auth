@@ -3,7 +3,6 @@ package com.samuelmaia1_github.yourauth.domain.auth;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidCredentialsException;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserRepository;
-import com.samuelmaia1_github.yourauth.domain.user.exceptions.UserNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
 import com.samuelmaia1_github.yourauth.infra.interfaces.IPasswordEncoder;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginDTO;
