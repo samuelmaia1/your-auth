@@ -1,6 +1,7 @@
 package com.samuelmaia1_github.yourauth.domain.auth;
 
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidCredentialsException;
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshTokenService;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserRepository;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
@@ -20,6 +21,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final IPasswordEncoder encoder;
     private final TokenService tokenService;
+    private final RefreshTokenService refreshTokenService;
 
     public LoginResponseDTO login(LoginDTO credentials) {
         User user = findUser(credentials);
@@ -47,5 +49,9 @@ public class AuthService {
         return optionalUser.orElseThrow(
                 () -> new InvalidCredentialsException("Credenciais inválidas.")
         );
+    }
+
+    public String generateRefreshToken(String userId, String userAgent) {
+        return refreshTokenService.createRefreshToken(userId, userAgent);
     }
 }

@@ -1,5 +1,7 @@
 package com.samuelmaia1_github.yourauth.domain.refreshtoken;
 
+import com.samuelmaia1_github.yourauth.domain.auth.exceptions.ExpiredTokenException;
+import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -40,7 +43,7 @@ public class RefreshTokenService {
         return raw;
     }
 
-    public void refresh() {
+    public void refresh(String rawToken) {
 
     }
 
@@ -53,11 +56,22 @@ public class RefreshTokenService {
                 .encodeToString(randomBytes);
     }
 
+    public RefreshToken getToken(String hash) {
+        Optional<RefreshToken> optionalRefreshToken = repository.findByHash(hash);
+
+        if (optionalRefreshToken.isEmpty())
+            throw new InvalidTokenException("Token de rotação não existente");
+
+        return optionalRefreshToken.get();
+    }
+
+    private void validateToken(RefreshToken token) {
+        if (!token.isValid())
+            throw new ExpiredTokenException("Token de rotação expirado");
+    }
+
     private Instant generateExpirationDate() {
         return Instant.now().plusSeconds(60 * 60 * 24 * 7);
     }
 
-    private String recoverUserAgent(HttpServletRequest request) {
-        return request.getHeader("User-Agent");
-    }
 }

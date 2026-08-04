@@ -43,4 +43,8 @@ public class RefreshTokenHasher {
             );
         }
     }
+
+    public boolean compareHashes(String hash1, String hash2) {
+        return hash1.equals(hash2);
+    }
 }

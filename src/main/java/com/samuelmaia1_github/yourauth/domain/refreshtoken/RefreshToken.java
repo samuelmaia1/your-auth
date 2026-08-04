@@ -21,4 +21,20 @@ public class RefreshToken {
     private Instant createdAt;
     private String userAgent;
     private long version;
+
+    public void revoke() {
+        this.revokedAt = Instant.now();
+    }
+
+    public boolean isRevoked() {
+        return revokedAt != null;
+    }
+
+    public boolean isExpired() {
+        return Instant.now().isAfter(expiresAt);
+    }
+
+    public boolean isValid() {
+        return !isRevoked() && !isExpired();
+    }
 }

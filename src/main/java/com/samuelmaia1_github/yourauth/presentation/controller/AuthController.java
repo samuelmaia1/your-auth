@@ -21,7 +21,6 @@ import java.time.Duration;
 public class AuthController {
 
     private final AuthService service;
-    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
     public ResponseEntity<UserResponseDTO> login(
@@ -36,7 +35,7 @@ public class AuthController {
         UserResponseDTO user = loginData.user();
         String accessToken = loginData.token();
 
-        String rawRefreshToken = refreshTokenService.createRefreshToken(user.id(), userAgent);
+        String rawRefreshToken = service.generateRefreshToken(user.id(), userAgent);
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", rawRefreshToken)
                 .httpOnly(true)
@@ -74,7 +73,7 @@ public class AuthController {
         UserResponseDTO user = loginData.user();
         String accessToken = loginData.token();
 
-        String rawRefreshToken = refreshTokenService.createRefreshToken(user.id(), userAgent);
+        String rawRefreshToken = service.generateRefreshToken(user.id(), userAgent);
 
         return ResponseEntity
                 .ok()
