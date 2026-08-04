@@ -32,6 +32,7 @@ public class SecurityConfig {
                             .requestMatchers("/error").permitAll()
                             .requestMatchers(HttpMethod.POST, "/users/create").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                             .anyRequest().authenticated()
                 ).addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
 

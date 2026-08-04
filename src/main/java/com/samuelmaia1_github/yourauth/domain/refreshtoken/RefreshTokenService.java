@@ -1,9 +1,10 @@
 package com.samuelmaia1_github.yourauth.domain.refreshtoken;
 
-import com.samuelmaia1_github.yourauth.domain.auth.exceptions.ExpiredTokenException;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.ExpiredRefreshTokenException;
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenReuseException;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.RefreshResponseDTO;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -43,8 +44,29 @@ public class RefreshTokenService {
         return raw;
     }
 
-    public void refresh(String rawToken) {
+    @Transactional
+    public RefreshResponseDTO refresh(String currentRawToken) {
+        RefreshToken currentToken = getToken(hasher.hash(currentRawToken));
 
+        validateToken(currentToken);
+
+        currentToken.revoke();
+
+        String newRaw = generate();
+
+        RefreshToken newToken = RefreshToken
+                .builder()
+                .userId(currentToken.getUserId())
+                .userAgent(currentToken.getUserAgent())
+                .expiresAt(generateExpirationDate())
+                .hash(hasher.hash(newRaw))
+                .familyId(currentToken.getFamilyId())
+                .build();
+
+        repository.save(currentToken);
+        repository.save(newToken);
+
+        return new RefreshResponseDTO(currentToken.getUserId(), newRaw);
     }
 
     private String generate() {
@@ -60,14 +82,24 @@ public class RefreshTokenService {
         Optional<RefreshToken> optionalRefreshToken = repository.findByHash(hash);
 
         if (optionalRefreshToken.isEmpty())
-            throw new InvalidTokenException("Token de rotação não existente");
+            throw new InvalidTokenException("Refresh token não existente");
 
         return optionalRefreshToken.get();
     }
 
+    public void revokeFamily(String familyId) {
+        repository.revokeFamily(familyId);
+    }
+
     private void validateToken(RefreshToken token) {
-        if (!token.isValid())
-            throw new ExpiredTokenException("Token de rotação expirado");
+        if (token.isRevoked()) {
+            revokeFamily(token.getFamilyId());
+
+            throw new RefreshTokenReuseException("Refresh token reutilizado. A sessão foi encerrada.");
+        }
+
+        if (token.isExpired())
+            throw new ExpiredRefreshTokenException("Refresh token expirado ou revogado");
     }
 
     private Instant generateExpirationDate() {

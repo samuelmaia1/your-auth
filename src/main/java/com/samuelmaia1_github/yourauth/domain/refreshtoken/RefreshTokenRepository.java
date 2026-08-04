@@ -1,5 +1,6 @@
 package com.samuelmaia1_github.yourauth.domain.refreshtoken;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +14,8 @@ public interface RefreshTokenRepository {
     List<RefreshToken> findAllByUserId(String userId);
 
     List<RefreshToken> findAllByFamilyId(String familyId);
+
+    void revokeFamily(String familyId);
 
     void deleteById(String id);
 }

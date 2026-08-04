@@ -5,8 +5,12 @@ import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshTokenRepositor
 import com.samuelmaia1_github.yourauth.infra.mappers.RefreshTokenMapper;
 import com.samuelmaia1_github.yourauth.infra.repository.RefreshTokenJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +48,11 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
                 .stream()
                 .map(RefreshTokenMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void revokeFamily(String familyId) {
+        repository.revokeFamily(familyId);
     }
 
     @Override

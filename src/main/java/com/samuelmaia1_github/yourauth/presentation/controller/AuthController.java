@@ -1,10 +1,7 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthService;
-import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshTokenService;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginDTO;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginMobileResponseDTO;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.*;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,21 +34,8 @@ public class AuthController {
 
         String rawRefreshToken = service.generateRefreshToken(user.id(), userAgent);
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", rawRefreshToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ofDays(7))
-                .build();
-
-        ResponseCookie accessCookie = ResponseCookie.from("access-token", accessToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ofHours(6))
-                .build();
+        ResponseCookie refreshCookie = buildRefreshCookie(rawRefreshToken);
+        ResponseCookie accessCookie = buildAccessCookie(accessToken);
 
         return ResponseEntity
                 .ok()
@@ -78,5 +62,52 @@ public class AuthController {
         return ResponseEntity
                 .ok()
                 .body(new LoginMobileResponseDTO(user, accessToken, rawRefreshToken));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokensResponseDTO> refreshToken(
+            @CookieValue("refresh_token") String refreshToken
+    ) {
+        TokensResponseDTO tokens = service.refreshSession(refreshToken);
+
+        ResponseCookie refreshCookie = buildRefreshCookie(tokens.refreshToken());
+        ResponseCookie accessCookie = buildAccessCookie(tokens.accessToken());
+
+        return ResponseEntity
+                .ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .body(tokens);
+    }
+
+    @PostMapping("/mobile/refresh")
+    public ResponseEntity<TokensResponseDTO> refreshMobileToken(
+            @Valid @RequestBody RefreshRequestDTO requestDTO
+            ) {
+        TokensResponseDTO tokens = service.refreshSession(requestDTO.refreshToken());
+
+        return ResponseEntity
+                .ok()
+                .body(tokens);
+    }
+
+    private ResponseCookie buildRefreshCookie(String refreshToken) {
+        return ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .sameSite("None")
+                .maxAge(Duration.ofDays(7))
+                .build();
+    }
+
+    private ResponseCookie buildAccessCookie(String accessToken) {
+        return ResponseCookie.from("access-token", accessToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .sameSite("None")
+                .maxAge(Duration.ofHours(6))
+                .build();
     }
 }
