@@ -15,12 +15,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
-@Table(name = "users")
+@Table(name = "accounts")
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity {
+public class AccountEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false)

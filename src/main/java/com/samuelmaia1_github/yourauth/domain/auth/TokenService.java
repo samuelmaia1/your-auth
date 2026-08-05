@@ -5,7 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.GenerateTokenFailException;
-import com.samuelmaia1_github.yourauth.domain.user.User;
+import com.samuelmaia1_github.yourauth.domain.account.Account;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,16 +30,16 @@ public class TokenService {
         this.accessTokenDuration = accessTokenDuration;
     }
 
-    public String generateToken(User user) {
+    public String generateToken(Account account) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
 
             return JWT
                     .create()
                     .withIssuer(issuer)
-                    .withSubject(user.getId())
-                    .withClaim("email", user.getEmail())
-                    .withClaim("CPF", user.getCPF().getValue())
+                    .withSubject(account.getId())
+                    .withClaim("email", account.getEmail())
+                    .withClaim("CPF", account.getCPF().getValue())
                     .withExpiresAt(generateExpirationDate())
                     .sign(algorithm);
         } catch (Exception exception) {

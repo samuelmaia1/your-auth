@@ -1,6 +1,6 @@
 package com.samuelmaia1_github.yourauth.infra.security;
 
-import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedUser;
+import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.auth.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,7 +26,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             if (token != null && tokenService.isValid(token)) {
-                var subject = new AuthenticatedUser(tokenService.getSubject(token), tokenService.getEmail(token));
+                var subject = new AuthenticatedAccount(tokenService.getSubject(token), tokenService.getEmail(token));
 
 
                 var auth = new UsernamePasswordAuthenticationToken(

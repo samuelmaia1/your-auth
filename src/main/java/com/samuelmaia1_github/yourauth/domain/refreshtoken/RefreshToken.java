@@ -13,7 +13,7 @@ import java.time.Instant;
 @NoArgsConstructor
 public class RefreshToken {
     private String id;
-    private String userId;
+    private String accountId;
     private String hash;
     private String familyId;
     private Instant expiresAt;

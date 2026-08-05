@@ -1,9 +1,9 @@
 package com.samuelmaia1_github.yourauth.presentation.dto.auth;
 
-import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
 
 public record LoginMobileResponseDTO(
-        UserResponseDTO user,
+        AccountResponseDTO account,
         String accessToken,
         String refreshToken
 ) {

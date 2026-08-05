@@ -14,7 +14,7 @@ public class RefreshTokenMapper {
 
         return RefreshToken.builder()
                 .id(entity.getId())
-                .userId(entity.getUserId())
+                .accountId(entity.getAccountId())
                 .hash(entity.getHash())
                 .familyId(entity.getFamilyId())
                 .expiresAt(entity.getExpiresAt())
@@ -32,7 +32,7 @@ public class RefreshTokenMapper {
 
         return RefreshTokenEntity.builder()
                 .id(refreshToken.getId())
-                .userId(refreshToken.getUserId())
+                .accountId(refreshToken.getAccountId())
                 .hash(refreshToken.getHash())
                 .familyId(refreshToken.getFamilyId())
                 .expiresAt(refreshToken.getExpiresAt())

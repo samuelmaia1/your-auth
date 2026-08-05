@@ -1,4 +1,4 @@
-package com.samuelmaia1_github.yourauth.domain.user;
+package com.samuelmaia1_github.yourauth.domain.account;
 
 import com.samuelmaia1_github.yourauth.domain.shared.Address;
 import com.samuelmaia1_github.yourauth.domain.shared.Phone;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class Account {
     private String id;
     private String name;
     private String lastName;

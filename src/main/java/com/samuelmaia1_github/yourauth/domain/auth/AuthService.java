@@ -3,16 +3,16 @@ package com.samuelmaia1_github.yourauth.domain.auth;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidCredentialsException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshToken;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshTokenService;
-import com.samuelmaia1_github.yourauth.domain.user.User;
-import com.samuelmaia1_github.yourauth.domain.user.UserRepository;
-import com.samuelmaia1_github.yourauth.domain.user.exceptions.UserNotFoundException;
+import com.samuelmaia1_github.yourauth.domain.account.Account;
+import com.samuelmaia1_github.yourauth.domain.account.AccountRepository;
+import com.samuelmaia1_github.yourauth.domain.account.exceptions.AccountNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
 import com.samuelmaia1_github.yourauth.infra.interfaces.IPasswordEncoder;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.RefreshResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.TokensResponseDTO;
-import com.samuelmaia1_github.yourauth.presentation.mapper.UserPresentationMapper;
+import com.samuelmaia1_github.yourauth.presentation.mapper.AccountPresentationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,49 +22,49 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final IPasswordEncoder encoder;
     private final TokenService tokenService;
     private final RefreshTokenService refreshTokenService;
 
     public LoginResponseDTO login(LoginDTO credentials) {
-        User user = findUser(credentials);
+        Account account = findAccount(credentials);
 
-        if (!encoder.matches(credentials.password(), user.getPassword())) {
+        if (!encoder.matches(credentials.password(), account.getPassword())) {
             throw new InvalidCredentialsException("Credenciais inválidas.");
         }
 
         return new LoginResponseDTO(
-                UserPresentationMapper.toResponseDTO(user),
-                tokenService.generateToken(user)
+                AccountPresentationMapper.toResponseDTO(account),
+                tokenService.generateToken(account)
         );
     }
 
-    public String generateRefreshToken(String userId, String userAgent) {
-        return refreshTokenService.createRefreshToken(userId, userAgent);
+    public String generateRefreshToken(String accountId, String userAgent) {
+        return refreshTokenService.createRefreshToken(accountId, userAgent);
     }
 
     public TokensResponseDTO refreshSession(String rawRefreshToken) {
         RefreshResponseDTO refreshResponse = refreshTokenService.refresh(rawRefreshToken);
 
-        User user = userRepository
-                .findById(refreshResponse.userId())
-                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado"));
+        Account account = accountRepository
+                .findById(refreshResponse.accountId())
+                .orElseThrow(() -> new AccountNotFoundException("Conta não encontrada"));
 
-        return new TokensResponseDTO(tokenService.generateToken(user), refreshResponse.rawRefreshToken());
+        return new TokensResponseDTO(tokenService.generateToken(account), refreshResponse.rawRefreshToken());
     }
 
-    private User findUser(LoginDTO credentials) {
-        Optional<User> optionalUser;
+    private Account findAccount(LoginDTO credentials) {
+        Optional<Account> optionalAccount;
 
         if (credentials.email() != null && !credentials.email().isBlank()) {
-            optionalUser = userRepository.findByEmail(credentials.email());
+            optionalAccount = accountRepository.findByEmail(credentials.email());
         } else {
             CPF cpf = new CPF(credentials.cpf());
-            optionalUser = userRepository.findByCPF(cpf);
+            optionalAccount = accountRepository.findByCPF(cpf);
         }
 
-        return optionalUser.orElseThrow(
+        return optionalAccount.orElseThrow(
                 () -> new InvalidCredentialsException("Credenciais inválidas.")
         );
     }

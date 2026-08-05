@@ -1,11 +1,11 @@
-package com.samuelmaia1_github.yourauth.presentation.dto.user;
+package com.samuelmaia1_github.yourauth.presentation.dto.account;
 
 import com.samuelmaia1_github.yourauth.presentation.dto.shared.AddressDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.shared.PhoneDTO;
 
 import java.time.LocalDateTime;
 
-public record UserResponseDTO(
+public record AccountResponseDTO(
         String id,
         String name,
         String lastName,

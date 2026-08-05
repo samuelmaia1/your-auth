@@ -1,4 +1,4 @@
-package com.samuelmaia1_github.yourauth.presentation.dto.user;
+package com.samuelmaia1_github.yourauth.presentation.dto.account;
 
 import com.samuelmaia1_github.yourauth.presentation.dto.shared.AddressDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.shared.PhoneDTO;
@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.br.CPF;
 
-public record CreateUserDTO(
+public record CreateAccountDTO(
         @NotBlank(message = "O nome é obrigatório")
         @Size(max = 255)
         String name,

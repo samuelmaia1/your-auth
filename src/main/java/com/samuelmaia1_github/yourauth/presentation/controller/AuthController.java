@@ -2,7 +2,7 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthService;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.*;
-import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponseDTO> login(
+    public ResponseEntity<AccountResponseDTO> login(
             @Valid @RequestBody LoginDTO loginDTO,
             @RequestHeader(
                     value = HttpHeaders.USER_AGENT,
@@ -40,10 +40,10 @@ public class AuthController {
     ) {
         LoginResponseDTO loginData = service.login(loginDTO);
 
-        UserResponseDTO user = loginData.user();
+        AccountResponseDTO account = loginData.account();
         String accessToken = loginData.token();
 
-        String rawRefreshToken = service.generateRefreshToken(user.id(), userAgent);
+        String rawRefreshToken = service.generateRefreshToken(account.id(), userAgent);
 
         ResponseCookie refreshCookie = buildRefreshCookie(rawRefreshToken);
         ResponseCookie accessCookie = buildAccessCookie(accessToken);
@@ -52,7 +52,7 @@ public class AuthController {
                 .ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
-                .body(user);
+                .body(account);
     }
 
     @PostMapping("/mobile/login")
@@ -65,14 +65,14 @@ public class AuthController {
     ) {
         LoginResponseDTO loginData = service.login(loginDTO);
 
-        UserResponseDTO user = loginData.user();
+        AccountResponseDTO account = loginData.account();
         String accessToken = loginData.token();
 
-        String rawRefreshToken = service.generateRefreshToken(user.id(), userAgent);
+        String rawRefreshToken = service.generateRefreshToken(account.id(), userAgent);
 
         return ResponseEntity
                 .ok()
-                .body(new LoginMobileResponseDTO(user, accessToken, rawRefreshToken));
+                .body(new LoginMobileResponseDTO(account, accessToken, rawRefreshToken));
     }
 
     @PostMapping("/refresh")

@@ -35,8 +35,8 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public List<RefreshToken> findAllByUserId(String userId) {
-        return repository.findAllByUserId(userId)
+    public List<RefreshToken> findAllByAccountId(String accountId) {
+        return repository.findAllByAccountId(accountId)
                 .stream()
                 .map(RefreshTokenMapper::toDomain)
                 .toList();
