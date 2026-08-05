@@ -1,5 +1,6 @@
 package com.samuelmaia1_github.yourauth.domain.refreshtoken;
 
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenHashException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +38,7 @@ public class RefreshTokenHasher {
 
             return HexFormat.of().formatHex(result);
         } catch (GeneralSecurityException exception) {
-            throw new IllegalStateException(
+            throw new RefreshTokenHashException(
                     "Falha ao calcular hash do refresh token",
                     exception
             );
