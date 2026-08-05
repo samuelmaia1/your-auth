@@ -37,6 +37,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByEmailIgnoreCaseOrCPF(String email, CPF cpf) {
+        return repository.findByEmailIgnoreCaseOrCPF(email, cpf).map(UserMapper::toDomain);
+    }
+
+    @Override
     public void deleteById(String id) {
 
     }

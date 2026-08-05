@@ -3,8 +3,8 @@ package com.samuelmaia1_github.yourauth.presentation.mapper;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
 import com.samuelmaia1_github.yourauth.infra.utils.Formatter;
-import com.samuelmaia1_github.yourauth.presentation.dto.CreateUserDTO;
-import com.samuelmaia1_github.yourauth.presentation.dto.UserResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
 import org.springframework.stereotype.Component;
 
 @Component

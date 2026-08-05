@@ -1,4 +1,4 @@
-package com.samuelmaia1_github.yourauth.presentation.dto;
+package com.samuelmaia1_github.yourauth.presentation.dto.user;
 
 import com.samuelmaia1_github.yourauth.presentation.dto.shared.AddressDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.shared.PhoneDTO;
