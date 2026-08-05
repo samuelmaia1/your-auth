@@ -6,45 +6,26 @@ import com.samuelmaia1_github.yourauth.domain.account.AccountRepository;
 import com.samuelmaia1_github.yourauth.domain.account.exceptions.AccountAlreadyExistsException;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
 public class AccountPolicyTest {
-    @Mock
-    AccountRepository repository;
-
-    @InjectMocks
-    AccountPolicy policy;
-
     @Test
     void shouldAllowCreateAccountWhenEmailAndCPFAreUnique() {
-        Account account = mock(Account.class);
-
-        when(account.getEmail()).thenReturn("email@email.com");
         CPF cpf = new CPF("12345678909");
-        when(account.getCPF()).thenReturn(cpf);
-
-        when(repository.findByEmail("email@email.com")).thenReturn(Optional.empty());
-        when(repository.findByCPF(cpf)).thenReturn(Optional.empty());
+        Account account = account(cpf);
+        AccountPolicy policy = new AccountPolicy(new StubAccountRepository(Optional.empty(), Optional.empty()));
 
         assertThatNoException().isThrownBy(() -> policy.ensureCanCreate(account));
     }
 
     @Test
     void shouldNotAllowCreateAccountWhenEmailAlreadyExists() {
-        Account account = mock(Account.class);
-
-        when(account.getEmail()).thenReturn("email@email.com");
-
-        when(repository.findByEmail("email@email.com")).thenReturn(Optional.of(account));
+        Account account = account(null);
+        AccountPolicy policy = new AccountPolicy(new StubAccountRepository(Optional.of(account), Optional.empty()));
 
         assertThatThrownBy(() -> policy.ensureCanCreate(account))
                 .isInstanceOf(AccountAlreadyExistsException.class)
@@ -53,15 +34,58 @@ public class AccountPolicyTest {
 
     @Test
     void shouldNotAllowCreateAccountWhenCPFAlreadyExists() {
-        Account account = mock(Account.class);
-
         CPF cpf = new CPF("12345678909");
-        when(account.getCPF()).thenReturn(cpf);
-
-        when(repository.findByCPF(cpf)).thenReturn(Optional.of(account));
+        Account account = account(cpf);
+        AccountPolicy policy = new AccountPolicy(new StubAccountRepository(Optional.empty(), Optional.of(account)));
 
         assertThatThrownBy(() -> policy.ensureCanCreate(account))
                 .isInstanceOf(AccountAlreadyExistsException.class)
                 .hasMessage("CPF já cadastrado");
+    }
+
+    private Account account(CPF cpf) {
+        return Account.builder()
+                .email("email@email.com")
+                .CPF(cpf)
+                .build();
+    }
+
+    private static class StubAccountRepository implements AccountRepository {
+        private final Optional<Account> accountByEmail;
+        private final Optional<Account> accountByCPF;
+
+        private StubAccountRepository(Optional<Account> accountByEmail, Optional<Account> accountByCPF) {
+            this.accountByEmail = accountByEmail;
+            this.accountByCPF = accountByCPF;
+        }
+
+        @Override
+        public Account save(Account account) {
+            return account;
+        }
+
+        @Override
+        public Optional<Account> findById(String id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Account> findByEmail(String email) {
+            return accountByEmail;
+        }
+
+        @Override
+        public Optional<Account> findByCPF(CPF cpf) {
+            return accountByCPF;
+        }
+
+        @Override
+        public Optional<Account> findByEmailIgnoreCaseOrCPF(String email, CPF cpf) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void deleteById(String id) {
+        }
     }
 }
