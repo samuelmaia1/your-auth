@@ -5,9 +5,11 @@ import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.ExpiredRef
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenReuseException;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.RefreshResponseDTO;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Optional;
@@ -19,12 +21,18 @@ public class RefreshTokenService {
     private final RefreshTokenHasher hasher;
     private final RefreshTokenRepository repository;
     private final SecureRandom secureRandom;
+    private final Duration refreshTokenDuration;
     private final Integer tokenSize = 32;
 
-    public RefreshTokenService(RefreshTokenHasher hasher, RefreshTokenRepository repository) {
+    public RefreshTokenService(
+            RefreshTokenHasher hasher,
+            RefreshTokenRepository repository,
+            @Value("${api.security.refresh-token.duration}") Duration refreshTokenDuration
+    ) {
         this.hasher = hasher;
         this.repository = repository;
         this.secureRandom = new SecureRandom();
+        this.refreshTokenDuration = refreshTokenDuration;
     }
 
     public String createRefreshToken(String userId, String userAgent) {
@@ -103,7 +111,7 @@ public class RefreshTokenService {
     }
 
     private Instant generateExpirationDate() {
-        return Instant.now().plusSeconds(60 * 60 * 24 * 7);
+        return Instant.now().plus(refreshTokenDuration);
     }
 
 }

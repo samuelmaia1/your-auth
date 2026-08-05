@@ -4,7 +4,7 @@ import com.samuelmaia1_github.yourauth.domain.auth.AuthService;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.*;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +14,21 @@ import java.time.Duration;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService service;
+    private final Duration refreshTokenDuration;
+    private final Duration accessTokenDuration;
+
+    public AuthController(
+            AuthService service,
+            @Value("${api.security.refresh-token.duration}") Duration refreshTokenDuration,
+            @Value("${api.security.access-token.duration}") Duration accessTokenDuration
+    ) {
+        this.service = service;
+        this.refreshTokenDuration = refreshTokenDuration;
+        this.accessTokenDuration = accessTokenDuration;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<UserResponseDTO> login(
@@ -83,7 +94,7 @@ public class AuthController {
     @PostMapping("/mobile/refresh")
     public ResponseEntity<TokensResponseDTO> refreshMobileToken(
             @Valid @RequestBody RefreshRequestDTO requestDTO
-            ) {
+    ) {
         TokensResponseDTO tokens = service.refreshSession(requestDTO.refreshToken());
 
         return ResponseEntity
@@ -97,7 +108,7 @@ public class AuthController {
                 .secure(true)
                 .path("/")
                 .sameSite("None")
-                .maxAge(Duration.ofDays(7))
+                .maxAge(refreshTokenDuration)
                 .build();
     }
 
@@ -107,7 +118,7 @@ public class AuthController {
                 .secure(true)
                 .path("/")
                 .sameSite("None")
-                .maxAge(Duration.ofHours(6))
+                .maxAge(accessTokenDuration)
                 .build();
     }
 }

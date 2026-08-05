@@ -11,17 +11,24 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 @Service
 public class TokenService {
-    @Value("${api.security.access-token.secret}")
-    private String secret;
+    private final String secret;
+    private final String issuer;
+    private final Duration accessTokenDuration;
 
-    @Value("${api.security.access-token.issuer}")
-    private String issuer;
+    public TokenService(
+            @Value("${api.security.access-token.secret}") String secret,
+            @Value("${api.security.access-token.issuer}") String issuer,
+            @Value("${api.security.access-token.duration}") Duration accessTokenDuration
+    ) {
+        this.secret = secret;
+        this.issuer = issuer;
+        this.accessTokenDuration = accessTokenDuration;
+    }
 
     public String generateToken(User user) {
         try {
@@ -94,8 +101,6 @@ public class TokenService {
     }
 
     private Instant generateExpirationDate() {
-        return LocalDateTime.now()
-                .plusSeconds(60 * 6)
-                .toInstant(ZoneOffset.of("-03:00"));
+        return Instant.now().plus(accessTokenDuration);
     }
 }
