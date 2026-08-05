@@ -43,7 +43,7 @@ public class TokenService {
                     .withExpiresAt(generateExpirationDate())
                     .sign(algorithm);
         } catch (Exception exception) {
-            throw new GenerateTokenFailException("Falha ao gerar token de acesso");
+            throw new GenerateTokenFailException("Falha ao gerar token de acesso", exception);
         }
     }
 

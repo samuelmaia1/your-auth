@@ -8,4 +8,8 @@ public class GenerateTokenFailException extends RuntimeException {
     public GenerateTokenFailException(String message) {
         super(message);
     }
+
+    public GenerateTokenFailException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
