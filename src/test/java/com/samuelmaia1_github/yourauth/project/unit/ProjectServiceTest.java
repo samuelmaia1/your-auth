@@ -10,12 +10,15 @@ import com.samuelmaia1_github.yourauth.domain.project.ProjectRepository;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectService;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectStatus;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMember;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRepository;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRole;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
+import com.samuelmaia1_github.yourauth.presentation.dto.passwordconfig.PasswordConfigDTO;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -33,14 +36,26 @@ public class ProjectServiceTest {
         RecordingProjectRepository projectRepository = new RecordingProjectRepository();
         RecordingProjectMemberRepository projectMemberRepository = new RecordingProjectMemberRepository();
         RecordingProjectPolicy policy = new RecordingProjectPolicy();
+        PasswordConfigRepository passwordConfigRepository = new PasswordConfigRepository() {
+            @Override
+            public PasswordConfig save(PasswordConfig config) {
+                return null;
+            }
+
+            @Override
+            public Optional<PasswordConfig> findByProjectId(String projectId) {
+                return Optional.empty();
+            }
+        };
         ProjectService service = new ProjectService(
                 projectRepository,
+                passwordConfigRepository,
                 projectMemberRepository,
                 new StubAccountRepository(Optional.of(Account.builder().id("account-id").build())),
                 policy
         );
 
-        Project createdProject = service.create(project);
+        Project createdProject = service.create(project, PasswordConfig.createDefault());
 
         assertThat(policy.checkedCreateProject).isSameAs(project);
         assertThat(projectRepository.savedProject).isSameAs(project);
@@ -55,14 +70,26 @@ public class ProjectServiceTest {
         RecordingProjectRepository projectRepository = new RecordingProjectRepository();
         RecordingProjectMemberRepository projectMemberRepository = new RecordingProjectMemberRepository();
         RecordingProjectPolicy policy = new RecordingProjectPolicy();
+        PasswordConfigRepository passwordConfigRepository = new PasswordConfigRepository() {
+            @Override
+            public PasswordConfig save(PasswordConfig config) {
+                return null;
+            }
+
+            @Override
+            public Optional<PasswordConfig> findByProjectId(String projectId) {
+                return Optional.empty();
+            }
+        };
         ProjectService service = new ProjectService(
                 projectRepository,
+                passwordConfigRepository,
                 projectMemberRepository,
-                new StubAccountRepository(Optional.empty()),
+                new StubAccountRepository(Optional.of(Account.builder().id("account-id").build())),
                 policy
         );
 
-        assertThatThrownBy(() -> service.create(project()))
+        assertThatThrownBy(() -> service.create(project(), PasswordConfig.createDefault()))
                 .isInstanceOf(AccountNotFoundException.class)
                 .hasMessage("Conta não encontrada.");
 
@@ -180,8 +207,20 @@ public class ProjectServiceTest {
             ProjectMemberRepository projectMemberRepository,
             ProjectPolicy policy
     ) {
+        PasswordConfigRepository passwordConfigRepository = new PasswordConfigRepository() {
+            @Override
+            public PasswordConfig save(PasswordConfig config) {
+                return null;
+            }
+
+            @Override
+            public Optional<PasswordConfig> findByProjectId(String projectId) {
+                return Optional.empty();
+            }
+        };
         return new ProjectService(
                 projectRepository,
+                passwordConfigRepository,
                 projectMemberRepository,
                 new StubAccountRepository(Optional.empty()),
                 policy

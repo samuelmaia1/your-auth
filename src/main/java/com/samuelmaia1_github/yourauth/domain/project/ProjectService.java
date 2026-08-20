@@ -4,6 +4,8 @@ import com.samuelmaia1_github.yourauth.domain.account.AccountRepository;
 import com.samuelmaia1_github.yourauth.domain.account.exceptions.AccountNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFoundException;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMember;
@@ -24,12 +26,13 @@ public class ProjectService {
     );
 
     private final ProjectRepository repository;
+    private final PasswordConfigRepository passwordConfigRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final AccountRepository accountRepository;
     private final ProjectPolicy policy;
 
     @Transactional
-    public Project create(Project project) {
+    public Project create(Project project, PasswordConfig requestedPasswordConfig) {
         accountRepository.findById(project.getOwnerAccountId())
                 .orElseThrow(AccountNotFoundException::new);
 
@@ -42,6 +45,13 @@ public class ProjectService {
                 .accountId(createdProject.getOwnerAccountId())
                 .role(ProjectMemberRole.OWNER)
                 .build());
+
+        PasswordConfig passwordConfig =
+                requestedPasswordConfig == null ? PasswordConfig.createDefault() : requestedPasswordConfig;
+
+        passwordConfig.assignToProject(createdProject.getId());
+
+        passwordConfigRepository.save(passwordConfig);
 
         return createdProject;
     }

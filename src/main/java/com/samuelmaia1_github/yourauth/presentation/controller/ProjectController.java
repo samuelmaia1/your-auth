@@ -3,11 +3,15 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.project.Project;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectService;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
+import com.samuelmaia1_github.yourauth.presentation.dto.passwordconfig.PasswordConfigDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.CreateProjectDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.ProjectResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.UpdateProjectDTO;
+import com.samuelmaia1_github.yourauth.presentation.mapper.PasswordConfigPresentationMapper;
 import com.samuelmaia1_github.yourauth.presentation.mapper.ProjectPresentationMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ProjectController {
     private final ProjectService service;
+    private final PasswordConfigService passwordConfigService;
 
     @PostMapping("/create")
     public ResponseEntity<ProjectResponseDTO> create(
@@ -36,7 +41,13 @@ public class ProjectController {
             @Valid @RequestBody CreateProjectDTO dto
     ) {
         Project project = ProjectPresentationMapper.toDomain(dto, authenticatedAccount.id());
-        Project createdProject = service.create(project);
+        PasswordConfig passwordConfig = PasswordConfigPresentationMapper.toDomain(dto.passwordConfig());
+
+        Project createdProject = service
+                .create(
+                        project,
+                        passwordConfig
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -51,6 +62,14 @@ public class ProjectController {
         Project project = service.findById(id, authenticatedAccount.id());
 
         return ResponseEntity.ok(ProjectPresentationMapper.toResponseDTO(project));
+    }
+
+    @GetMapping("/{id}/password-config")
+    public ResponseEntity<PasswordConfigDTO> getPasswordConfigById(@PathVariable String id) {
+        PasswordConfig config = passwordConfigService.findByProjectId(id);
+
+        return ResponseEntity
+                .ok(PasswordConfigPresentationMapper.toDto(config));
     }
 
     @GetMapping
