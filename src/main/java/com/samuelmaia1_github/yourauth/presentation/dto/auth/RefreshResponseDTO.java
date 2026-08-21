@@ -4,7 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record RefreshResponseDTO(
-        String userId,
+        String accountId,
         String rawRefreshToken
 ) {
 }

@@ -1,5 +1,6 @@
 package com.samuelmaia1_github.yourauth.presentation.exception;
 
+import com.samuelmaia1_github.yourauth.domain.shared.exceptions.IllegalPaginationException;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +56,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException exception) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        return ResponseEntity
+                .status(status)
+                .body(ErrorResponse.buildError(status, exception.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalPaginationException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalPagination(IllegalPaginationException exception) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
 
         return ResponseEntity

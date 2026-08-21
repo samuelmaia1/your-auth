@@ -35,12 +35,12 @@ public class RefreshTokenService {
         this.refreshTokenDuration = refreshTokenDuration;
     }
 
-    public String createRefreshToken(String userId, String userAgent) {
+    public String createRefreshToken(String accountId, String userAgent) {
         String raw = generate();
 
         RefreshToken token = RefreshToken
                 .builder()
-                .userId(userId)
+                .accountId(accountId)
                 .hash(hasher.hash(raw))
                 .expiresAt(generateExpirationDate())
                 .familyId(UUID.randomUUID().toString())
@@ -64,7 +64,7 @@ public class RefreshTokenService {
 
         RefreshToken newToken = RefreshToken
                 .builder()
-                .userId(currentToken.getUserId())
+                .accountId(currentToken.getAccountId())
                 .userAgent(currentToken.getUserAgent())
                 .expiresAt(generateExpirationDate())
                 .hash(hasher.hash(newRaw))
@@ -74,7 +74,7 @@ public class RefreshTokenService {
         repository.save(currentToken);
         repository.save(newToken);
 
-        return new RefreshResponseDTO(currentToken.getUserId(), newRaw);
+        return new RefreshResponseDTO(currentToken.getAccountId(), newRaw);
     }
 
     private String generate() {

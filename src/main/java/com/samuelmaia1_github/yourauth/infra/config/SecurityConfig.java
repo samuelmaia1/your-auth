@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth ->
                     auth.requestMatchers("/h2-console/**").permitAll()
                             .requestMatchers("/error").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/users/create").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/accounts/create").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                             .anyRequest().authenticated()

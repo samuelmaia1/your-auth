@@ -31,12 +31,12 @@ O projeto seguirá uma arquitetura com domínio separado da infraestrutura, mant
 src/main/java/com/samuelmaia1_github/yourauth
 ├── YourAuthApplication.java
 ├── domain
-│   └── user
-│       ├── User.java
-│       ├── UserService.java
-│       ├── UserPolicy.java
+│   └── account
+│       ├── Account.java
+│       ├── AccountService.java
+│       ├── AccountPolicy.java
 │       └── exceptions
-│           └── UserException.java
+│           └── AccountException.java
 ├── infra
 │   ├── beans
 │   ├── config
@@ -105,20 +105,20 @@ Para executar os testes:
 
 Os endpoints ainda não foram implementados. Esta seção ficará pronta para receber os exemplos reais conforme os controllers forem criados.
 
-### Cadastro de usuário
+### Cadastro de conta
 
 **URL**
 
 ```http
-POST /api/v1/auth/register
+POST /accounts/create
 ```
 
 **Request**
 
 ```json
 {
-  "name": "Nome do usuário",
-  "email": "usuario@email.com",
+  "name": "Nome da conta",
+  "email": "conta@email.com",
   "password": "senha-segura"
 }
 ```
@@ -126,11 +126,11 @@ POST /api/v1/auth/register
 **Curl**
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST http://localhost:8080/accounts/create \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Nome do usuário",
-    "email": "usuario@email.com",
+    "name": "Nome da conta",
+    "email": "conta@email.com",
     "password": "senha-segura"
   }'
 ```
@@ -139,9 +139,9 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 
 ```json
 {
-  "id": "id-do-usuario",
-  "name": "Nome do usuário",
-  "email": "usuario@email.com"
+  "id": "id-da-conta",
+  "name": "Nome da conta",
+  "email": "conta@email.com"
 }
 ```
 
@@ -157,7 +157,7 @@ POST /api/v1/auth/login
 
 ```json
 {
-  "email": "usuario@email.com",
+  "email": "conta@email.com",
   "password": "senha-segura"
 }
 ```
@@ -168,7 +168,7 @@ POST /api/v1/auth/login
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "usuario@email.com",
+    "email": "conta@email.com",
     "password": "senha-segura"
   }'
 ```
@@ -202,9 +202,9 @@ curl -X GET http://localhost:8080/api/v1/auth/me \
 
 ```json
 {
-  "id": "id-do-usuario",
-  "name": "Nome do usuário",
-  "email": "usuario@email.com"
+  "id": "id-da-conta",
+  "name": "Nome da conta",
+  "email": "conta@email.com"
 }
 ```
 
@@ -231,7 +231,7 @@ Esta seção deverá ser expandida com:
 ## Próximos passos ou melhorias
 
 - Criar a estrutura de pacotes `domain`, `infra` e `presentation`
-- Implementar cadastro de usuários
+- Implementar cadastro de contas
 - Implementar login
 - Implementar emissão e validação de tokens
 - Implementar configuração de segurança

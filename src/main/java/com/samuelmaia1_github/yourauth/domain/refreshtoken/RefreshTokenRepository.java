@@ -11,7 +11,7 @@ public interface RefreshTokenRepository {
 
     Optional<RefreshToken> findByHash(String hash);
 
-    List<RefreshToken> findAllByUserId(String userId);
+    List<RefreshToken> findAllByAccountId(String accountId);
 
     List<RefreshToken> findAllByFamilyId(String familyId);
 

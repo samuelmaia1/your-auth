@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEntity, String> {
     Optional<RefreshTokenEntity> findByHash(String hash);
 
-    List<RefreshTokenEntity> findAllByUserId(String userId);
+    List<RefreshTokenEntity> findAllByAccountId(String accountId);
 
     List<RefreshTokenEntity> findAllByFamilyId(String familyId);
 
