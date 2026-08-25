@@ -5,6 +5,8 @@ import com.samuelmaia1_github.yourauth.domain.project.ProjectRepository;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRepository;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRole;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyScope;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.exceptions.ProjectApiKeyAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.exceptions.UserNotFoundException;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,18 @@ public class UserService {
         ensureProjectExists(user.getProjectId());
         ensureCanManage(user.getProjectId(), accountId);
 
+        return create(user);
+    }
+
+    @Transactional
+    public User createWithApiKey(User user, Set<ProjectApiKeyScope> scopes) {
+        ensureCanCreateWithApiKey(scopes);
+        ensureProjectExists(user.getProjectId());
+
+        return create(user);
+    }
+
+    private User create(User user) {
         policy.ensureCanCreate(user);
 
         if (user.getStatus() == null) {
@@ -43,6 +58,14 @@ public class UserService {
         user.updatePassword(encoder.encode(user.getPassword()));
 
         return userRepository.save(user);
+    }
+
+    private void ensureCanCreateWithApiKey(Set<ProjectApiKeyScope> scopes) {
+        if (scopes == null || !scopes.contains(ProjectApiKeyScope.USERS_WRITE)) {
+            throw new ProjectApiKeyAccessDeniedException(
+                    "A API key precisa da permissão USERS_WRITE para cadastrar usuários."
+            );
+        }
     }
 
     public PageResult<User> findAllByProjectId(String projectId, String accountId, Pagination pagination) {
