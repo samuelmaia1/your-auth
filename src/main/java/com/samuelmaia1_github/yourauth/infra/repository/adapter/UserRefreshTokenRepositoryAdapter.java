@@ -39,16 +39,16 @@ public class UserRefreshTokenRepositoryAdapter implements UserRefreshTokenReposi
     }
 
     @Override
-    public List<UserRefreshToken> findAllByFamilyId(String familyId) {
-        return repository.findAllByFamilyId(familyId)
+    public List<UserRefreshToken> findAllBySessionId(String sessionId) {
+        return repository.findAllBySessionId(sessionId)
                 .stream()
                 .map(UserRefreshTokenMapper::toDomain)
                 .toList();
     }
 
     @Override
-    public void revokeFamily(String familyId) {
-        repository.revokeFamily(familyId);
+    public void revokeSession(String sessionId) {
+        repository.revokeSession(sessionId);
     }
 
     @Override

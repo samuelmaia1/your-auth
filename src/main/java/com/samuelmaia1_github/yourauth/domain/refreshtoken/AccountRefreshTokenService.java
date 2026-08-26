@@ -42,7 +42,7 @@ public class AccountRefreshTokenService {
                 .accountId(accountId)
                 .hash(hasher.hash(raw))
                 .expiresAt(generateExpirationDate())
-                .familyId(UUID.randomUUID().toString())
+                .sessionId(UUID.randomUUID().toString())
                 .userAgent(userAgent)
                 .build();
 
@@ -67,7 +67,7 @@ public class AccountRefreshTokenService {
                 .userAgent(currentToken.getUserAgent())
                 .expiresAt(generateExpirationDate())
                 .hash(hasher.hash(newRaw))
-                .familyId(currentToken.getFamilyId())
+                .sessionId(currentToken.getSessionId())
                 .build();
 
         repository.save(currentToken);
@@ -85,13 +85,13 @@ public class AccountRefreshTokenService {
         return optionalRefreshToken.get();
     }
 
-    public void revokeFamily(String familyId) {
-        repository.revokeFamily(familyId);
+    public void revokeSession(String sessionId) {
+        repository.revokeSession(sessionId);
     }
 
     private void validateToken(AccountRefreshToken token) {
         if (token.isRevoked()) {
-            revokeFamily(token.getFamilyId());
+            revokeSession(token.getSessionId());
 
             throw new RefreshTokenReuseException("Refresh token reutilizado. A sessão foi encerrada.");
         }

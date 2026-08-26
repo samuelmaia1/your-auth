@@ -1,6 +1,7 @@
 package com.samuelmaia1_github.yourauth.domain.auth;
 
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidCredentialsException;
+import com.samuelmaia1_github.yourauth.domain.auth.exceptions.LoginBlockedException;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.exceptions.AuthConfigNotFoundException;
@@ -8,7 +9,9 @@ import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshTokenServi
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserRepository;
 import com.samuelmaia1_github.yourauth.domain.user.exceptions.UserNotFoundException;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionRepository;
 import com.samuelmaia1_github.yourauth.infra.interfaces.IPasswordEncoder;
+import com.samuelmaia1_github.yourauth.infra.utils.Formatter;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.TokenDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginResponseDTO;
@@ -18,12 +21,14 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
 public class UserAuthService {
     private final UserRepository userRepository;
     private final AuthConfigRepository authConfigRepository;
+    private final UserSessionRepository sessionRepository;
     private final IPasswordEncoder encoder;
     private final TokenService tokenService;
 
@@ -36,25 +41,47 @@ public class UserAuthService {
         User user = userRepository.findByProjectIdAndEmailIgnoreCase(projectId, credentials.email())
                 .orElseThrow(() -> new UserNotFoundException("Usuário não cadastrado."));
 
-        validateCredentials(credentials.password(), user.getPassword());
-
         AuthConfig authConfig = authConfigRepository.findByProjectId(projectId)
                 .orElseThrow(AuthConfigNotFoundException::new);
 
-        String accessToken = tokenService.generateToken(user, projectId, authConfig);
+        try {
+            ensureCanLogin(user);
+            validateCredentials(credentials.password(), user.getPassword());
 
-        Duration accessTokenDuration = Duration.ofMinutes(authConfig.getAccessTokenExpirationMinutes());
+            String accessToken = tokenService.generateToken(user, projectId, authConfig);
 
-        user.recordSuccessfulLogin(ipAddress, userAgent);
+            Duration accessTokenDuration = Duration.ofMinutes(authConfig.getAccessTokenExpirationMinutes());
 
-        userRepository.save(user);
+            user.recordSuccessfulLogin(ipAddress, userAgent);
 
-        return new UserLoginResponseDTO(
-                UserPresentationMapper.toResponseDTO(user),
-                new TokenDTO(accessToken, accessTokenDuration),
-                true,
-                LocalDateTime.now()
-        );
+            userRepository.save(user);
+
+            return new UserLoginResponseDTO(
+                    UserPresentationMapper.toResponseDTO(user),
+                    new TokenDTO(accessToken, accessTokenDuration),
+                    true,
+                    LocalDateTime.now()
+            );
+        } catch (InvalidCredentialsException exception) {
+            user.recordFailedLogin();
+
+            if (user.getFailedLoginAttempts() > authConfig.getFailedLoginAttemptsLimit()) {
+                user.lockUntil(LocalDateTime.now().plusMinutes(authConfig.getLockDurationMinutes()));
+            }
+
+            userRepository.save(user);
+
+            throw new InvalidCredentialsException(exception.getMessage());
+        }
+    }
+
+    private void ensureCanLogin(User user) {
+        if (user.isLocked()) {
+            String formatted = Formatter.formatLocalDateTime(user.getLockedUntil());
+
+            throw new LoginBlockedException("Usuário bloquado de fazer login até: " + formatted);
+        }
+
     }
 
     private void validateCredentials(String password, String hashedPassword) {

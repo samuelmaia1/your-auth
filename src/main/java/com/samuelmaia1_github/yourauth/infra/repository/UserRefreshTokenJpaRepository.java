@@ -14,14 +14,14 @@ public interface UserRefreshTokenJpaRepository extends JpaRepository<UserRefresh
 
     List<UserRefreshTokenEntity> findAllByProjectIdAndUserId(String projectId, String userId);
 
-    List<UserRefreshTokenEntity> findAllByFamilyId(String familyId);
+    List<UserRefreshTokenEntity> findAllBySessionId(String sessionId);
 
     @Modifying
     @Query(value = """
         UPDATE user_refresh_tokens
         SET revoked_at = CURRENT_TIMESTAMP
-        WHERE family_id = :familyId
+        WHERE session_id = :sessionId
           AND revoked_at IS NULL
         """, nativeQuery = true)
-    int revokeFamily(@Param("familyId") String familyId);
+    int revokeSession(@Param("sessionId") String sessionId);
 }

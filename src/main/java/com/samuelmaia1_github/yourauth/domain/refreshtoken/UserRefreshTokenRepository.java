@@ -12,9 +12,9 @@ public interface UserRefreshTokenRepository {
 
     List<UserRefreshToken> findAllByProjectIdAndUserId(String projectId, String userId);
 
-    List<UserRefreshToken> findAllByFamilyId(String familyId);
+    List<UserRefreshToken> findAllBySessionId(String sessionId);
 
-    void revokeFamily(String familyId);
+    void revokeSession(String sessionId);
 
     void deleteById(String id);
 }

@@ -41,8 +41,8 @@ public class UserRefreshTokenEntity {
     @Column(nullable = false, unique = true)
     private String hash;
 
-    @Column(name = "family_id", nullable = false)
-    private String familyId;
+    @Column(name = "session_id", nullable = false)
+    private String sessionId;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;

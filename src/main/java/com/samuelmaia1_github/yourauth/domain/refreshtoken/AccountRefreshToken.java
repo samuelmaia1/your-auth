@@ -15,7 +15,7 @@ public class AccountRefreshToken {
     private String id;
     private String accountId;
     private String hash;
-    private String familyId;
+    private String sessionId;
     private Instant expiresAt;
     private Instant revokedAt;
     private Instant createdAt;

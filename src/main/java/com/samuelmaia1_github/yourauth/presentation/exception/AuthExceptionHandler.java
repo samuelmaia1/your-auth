@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.GenerateTokenFailException;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidCredentialsException;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
+import com.samuelmaia1_github.yourauth.domain.auth.exceptions.LoginBlockedException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.ExpiredRefreshTokenException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenHashException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenReuseException;
@@ -49,6 +50,11 @@ public class AuthExceptionHandler {
     @ExceptionHandler(RefreshTokenHashException.class)
     public ResponseEntity<ErrorResponse> handleRefreshTokenHash(RefreshTokenHashException exception) {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+    }
+
+    @ExceptionHandler(LoginBlockedException.class)
+    public ResponseEntity<ErrorResponse> handleLoginBlocked(LoginBlockedException exception) {
+        return buildError(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
     private ResponseEntity<ErrorResponse> buildError(HttpStatus status, String message) {

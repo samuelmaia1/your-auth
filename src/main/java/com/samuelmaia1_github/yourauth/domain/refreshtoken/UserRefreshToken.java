@@ -16,7 +16,7 @@ public class UserRefreshToken {
     private String projectId;
     private String userId;
     private String hash;
-    private String familyId;
+    private String sessionId;
     private Instant expiresAt;
     private Instant revokedAt;
     private Instant createdAt;

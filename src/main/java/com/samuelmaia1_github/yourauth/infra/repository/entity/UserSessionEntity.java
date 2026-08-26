@@ -21,38 +21,41 @@ import java.time.Instant;
 @Getter
 @Setter
 @Builder
-@Table(name = "account_refresh_tokens")
+@Table(name = "user_sessions")
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
-public class AccountRefreshTokenEntity {
+public class UserSessionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false)
     private String id;
 
-    @Column(name = "account_id", nullable = false)
-    private String accountId;
+    @Column(name = "project_id", nullable = false)
+    private String projectId;
 
-    @Column(nullable = false, unique = true)
-    private String hash;
+    @Column(name = "user_id", nullable = false)
+    private String userId;
 
-    @Column(name = "session_id", nullable = false)
-    private String sessionId;
+    @Column(name = "device_name")
+    private String deviceName;
 
-    @Column(name = "expires_at", nullable = false)
-    private Instant expiresAt;
+    @Column(name = "ip_address", length = 45)
+    private String ipAddress;
 
-    @Column(name = "revoked_at")
-    private Instant revokedAt;
+    @Column(name = "user_agent", length = 512)
+    private String userAgent;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "user_agent")
-    private String userAgent;
+    @Column(name = "last_used_at")
+    private Instant lastUsedAt;
+
+    @Column(name = "revoked_at")
+    private Instant revokedAt;
 
     @Version
     @Column(nullable = false)

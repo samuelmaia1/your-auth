@@ -14,14 +14,14 @@ public interface AccountRefreshTokenJpaRepository extends JpaRepository<AccountR
 
     List<AccountRefreshTokenEntity> findAllByAccountId(String accountId);
 
-    List<AccountRefreshTokenEntity> findAllByFamilyId(String familyId);
+    List<AccountRefreshTokenEntity> findAllBySessionId(String sessionId);
 
     @Modifying
     @Query(value = """
         UPDATE account_refresh_tokens
         SET revoked_at = CURRENT_TIMESTAMP
-        WHERE family_id = :familyId
+        WHERE session_id = :sessionId
           AND revoked_at IS NULL
         """, nativeQuery = true)
-    int revokeFamily(@Param("familyId") String familyId);
+    int revokeSession(@Param("sessionId") String sessionId);
 }

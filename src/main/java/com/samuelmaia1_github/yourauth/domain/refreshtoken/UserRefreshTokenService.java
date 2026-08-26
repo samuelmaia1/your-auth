@@ -31,7 +31,7 @@ public class UserRefreshTokenService {
                 .userId(userId)
                 .projectId(projectId)
                 .expiresAt(getExpiration(auth.getRefreshTokenExpirationDays()))
-                .familyId(UUID.randomUUID().toString())
+                .sessionId(UUID.randomUUID().toString())
                 .userAgent(userAgent)
                 .hash(hasher.hash(raw))
                 .build();
@@ -49,7 +49,7 @@ public class UserRefreshTokenService {
         throw new UnsupportedOperationException("UserRefreshTokenService ainda nao implementado.");
     }
 
-    public void revokeFamily(String familyId) {
+    public void revokeSession(String sessionId) {
     }
 
     private Instant getExpiration(Integer days) {

@@ -12,9 +12,9 @@ public interface AccountRefreshTokenRepository {
 
     List<AccountRefreshToken> findAllByAccountId(String accountId);
 
-    List<AccountRefreshToken> findAllByFamilyId(String familyId);
+    List<AccountRefreshToken> findAllBySessionId(String sessionId);
 
-    void revokeFamily(String familyId);
+    void revokeSession(String sessionId);
 
     void deleteById(String id);
 }
