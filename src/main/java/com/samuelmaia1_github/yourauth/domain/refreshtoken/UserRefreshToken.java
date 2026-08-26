@@ -11,9 +11,10 @@ import java.time.Instant;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RefreshToken {
+public class UserRefreshToken {
     private String id;
-    private String accountId;
+    private String projectId;
+    private String userId;
     private String hash;
     private String familyId;
     private Instant expiresAt;

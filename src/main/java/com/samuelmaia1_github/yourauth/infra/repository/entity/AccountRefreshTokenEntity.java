@@ -21,12 +21,12 @@ import java.time.Instant;
 @Getter
 @Setter
 @Builder
-@Table(name = "refresh_tokens")
+@Table(name = "account_refresh_tokens")
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
-public class RefreshTokenEntity {
+public class AccountRefreshTokenEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false)

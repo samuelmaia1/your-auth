@@ -1,6 +1,7 @@
 package com.samuelmaia1_github.yourauth.presentation.dto.project;
 
 import com.samuelmaia1_github.yourauth.domain.project.ProjectEnvironment;
+import com.samuelmaia1_github.yourauth.presentation.dto.authconfig.AuthConfigDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.passwordconfig.PasswordConfigDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +23,8 @@ public record CreateProjectDTO(
         @Size(max = 255)
         String tokenAudience,
 
-        @Valid PasswordConfigDTO passwordConfig
+        @Valid PasswordConfigDTO passwordConfig,
+
+        @Valid AuthConfigDTO authConfig
 ) {
 }

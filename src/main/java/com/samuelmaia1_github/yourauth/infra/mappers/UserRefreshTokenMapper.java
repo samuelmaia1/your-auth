@@ -1,20 +1,21 @@
 package com.samuelmaia1_github.yourauth.infra.mappers;
 
-import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshToken;
-import com.samuelmaia1_github.yourauth.infra.repository.entity.RefreshTokenEntity;
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshToken;
+import com.samuelmaia1_github.yourauth.infra.repository.entity.UserRefreshTokenEntity;
 
-public class RefreshTokenMapper {
-    private RefreshTokenMapper() {
+public class UserRefreshTokenMapper {
+    private UserRefreshTokenMapper() {
     }
 
-    public static RefreshToken toDomain(RefreshTokenEntity entity) {
+    public static UserRefreshToken toDomain(UserRefreshTokenEntity entity) {
         if (entity == null) {
             return null;
         }
 
-        return RefreshToken.builder()
+        return UserRefreshToken.builder()
                 .id(entity.getId())
-                .accountId(entity.getAccountId())
+                .projectId(entity.getProjectId())
+                .userId(entity.getUserId())
                 .hash(entity.getHash())
                 .familyId(entity.getFamilyId())
                 .expiresAt(entity.getExpiresAt())
@@ -25,14 +26,15 @@ public class RefreshTokenMapper {
                 .build();
     }
 
-    public static RefreshTokenEntity toEntity(RefreshToken refreshToken) {
+    public static UserRefreshTokenEntity toEntity(UserRefreshToken refreshToken) {
         if (refreshToken == null) {
             return null;
         }
 
-        return RefreshTokenEntity.builder()
+        return UserRefreshTokenEntity.builder()
                 .id(refreshToken.getId())
-                .accountId(refreshToken.getAccountId())
+                .projectId(refreshToken.getProjectId())
+                .userId(refreshToken.getUserId())
                 .hash(refreshToken.getHash())
                 .familyId(refreshToken.getFamilyId())
                 .expiresAt(refreshToken.getExpiresAt())

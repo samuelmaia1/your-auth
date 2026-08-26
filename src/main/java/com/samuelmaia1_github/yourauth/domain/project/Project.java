@@ -1,5 +1,6 @@
 package com.samuelmaia1_github.yourauth.domain.project;
 
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,4 +20,5 @@ public class Project {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private PasswordConfig passwordConfig;
+    private AuthConfig authConfig;
 }

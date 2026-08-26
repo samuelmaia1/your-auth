@@ -3,42 +3,41 @@ package com.samuelmaia1_github.yourauth.domain.refreshtoken;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.ExpiredRefreshTokenException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenReuseException;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.RefreshResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountRefreshResponseDTO;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class RefreshTokenService {
+public class AccountRefreshTokenService {
 
     private final RefreshTokenHasher hasher;
-    private final RefreshTokenRepository repository;
-    private final SecureRandom secureRandom;
+    private final RefreshTokenGenerator generator;
+    private final AccountRefreshTokenRepository repository;
     private final Duration refreshTokenDuration;
-    private final Integer tokenSize = 32;
 
-    public RefreshTokenService(
+    public AccountRefreshTokenService(
             RefreshTokenHasher hasher,
-            RefreshTokenRepository repository,
-            @Value("${api.security.refresh-token.duration}") Duration refreshTokenDuration
+            RefreshTokenGenerator generator,
+            AccountRefreshTokenRepository repository,
+            @Value("${api.security.account-refresh-token.duration:${api.security.refresh-token.duration}}")
+            Duration refreshTokenDuration
     ) {
         this.hasher = hasher;
+        this.generator = generator;
         this.repository = repository;
-        this.secureRandom = new SecureRandom();
         this.refreshTokenDuration = refreshTokenDuration;
     }
 
-    public String createRefreshToken(String accountId, String userAgent) {
-        String raw = generate();
+    public String createAccountRefreshToken(String accountId, String userAgent) {
+        String raw = generator.generate();
 
-        RefreshToken token = RefreshToken
+        AccountRefreshToken token = AccountRefreshToken
                 .builder()
                 .accountId(accountId)
                 .hash(hasher.hash(raw))
@@ -53,16 +52,16 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public RefreshResponseDTO refresh(String currentRawToken) {
-        RefreshToken currentToken = getToken(hasher.hash(currentRawToken));
+    public AccountRefreshResponseDTO refresh(String currentRawToken) {
+        AccountRefreshToken currentToken = getToken(hasher.hash(currentRawToken));
 
         validateToken(currentToken);
 
         currentToken.revoke();
 
-        String newRaw = generate();
+        String newRaw = generator.generate();
 
-        RefreshToken newToken = RefreshToken
+        AccountRefreshToken newToken = AccountRefreshToken
                 .builder()
                 .accountId(currentToken.getAccountId())
                 .userAgent(currentToken.getUserAgent())
@@ -74,20 +73,11 @@ public class RefreshTokenService {
         repository.save(currentToken);
         repository.save(newToken);
 
-        return new RefreshResponseDTO(currentToken.getAccountId(), newRaw);
+        return new AccountRefreshResponseDTO(currentToken.getAccountId(), newRaw);
     }
 
-    private String generate() {
-        byte[] randomBytes = new byte[tokenSize];
-        secureRandom.nextBytes(randomBytes);
-
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(randomBytes);
-    }
-
-    public RefreshToken getToken(String hash) {
-        Optional<RefreshToken> optionalRefreshToken = repository.findByHash(hash);
+    public AccountRefreshToken getToken(String hash) {
+        Optional<AccountRefreshToken> optionalRefreshToken = repository.findByHash(hash);
 
         if (optionalRefreshToken.isEmpty())
             throw new InvalidTokenException("Refresh token não existente");
@@ -99,7 +89,7 @@ public class RefreshTokenService {
         repository.revokeFamily(familyId);
     }
 
-    private void validateToken(RefreshToken token) {
+    private void validateToken(AccountRefreshToken token) {
         if (token.isRevoked()) {
             revokeFamily(token.getFamilyId());
 

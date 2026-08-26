@@ -1,9 +1,6 @@
 package com.samuelmaia1_github.yourauth.presentation.dto.auth;
 
-import lombok.Builder;
-
-@Builder
-public record RefreshResponseDTO(
+public record AccountRefreshResponseDTO(
         String accountId,
         String rawRefreshToken
 ) {

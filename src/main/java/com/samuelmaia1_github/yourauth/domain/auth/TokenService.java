@@ -6,6 +6,8 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.GenerateTokenFailException;
 import com.samuelmaia1_github.yourauth.domain.account.Account;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
+import com.samuelmaia1_github.yourauth.domain.user.User;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +43,25 @@ public class TokenService {
                     .withClaim("email", account.getEmail())
                     .withClaim("CPF", account.getCPF().getValue())
                     .withExpiresAt(generateExpirationDate())
+                    .sign(algorithm);
+        } catch (Exception exception) {
+            throw new GenerateTokenFailException("Falha ao gerar token de acesso", exception);
+        }
+    }
+
+    public String generateToken(User user, String projectId, AuthConfig config) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+
+            Duration duration = Duration.ofMinutes(config.getAccessTokenExpirationMinutes());
+
+            return JWT
+                    .create()
+                    .withIssuer(issuer)
+                    .withSubject(user.getId())
+                    .withClaim("email", user.getEmail())
+                    .withClaim("projectId", projectId)
+                    .withExpiresAt(generateExpirationDate(duration))
                     .sign(algorithm);
         } catch (Exception exception) {
             throw new GenerateTokenFailException("Falha ao gerar token de acesso", exception);
@@ -102,5 +123,9 @@ public class TokenService {
 
     private Instant generateExpirationDate() {
         return Instant.now().plus(accessTokenDuration);
+    }
+
+    private Instant generateExpirationDate(Duration duration) {
+        return Instant.now().plus(duration);
     }
 }

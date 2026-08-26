@@ -1,34 +1,36 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
+import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedProjectApiKey;
+import com.samuelmaia1_github.yourauth.domain.auth.UserAuthService;
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshTokenService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.TokenDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UpdateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.UserPresentationMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/projects/{projectId}/users")
 public class ProjectUserController {
     private final UserService userService;
+    private final UserAuthService userAuthService;
+    private final UserRefreshTokenService refreshTokenService;
 
     @PostMapping
     public ResponseEntity<UserResponseDTO> create(
@@ -94,4 +96,6 @@ public class ProjectUserController {
 
         return ResponseEntity.noContent().build();
     }
+
+
 }
