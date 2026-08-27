@@ -18,4 +18,20 @@ public class UserSession {
     private Instant lastUsedAt;
     private Instant revokedAt;
     private long version;
+
+    public boolean isValid() {
+        return !isRevoked();
+    }
+
+    public boolean isRevoked() {
+        return revokedAt != null;
+    }
+
+    public void revoke() {
+        revokedAt = Instant.now();
+    }
+
+    public void refresh() {
+        lastUsedAt = Instant.now();
+    }
 }

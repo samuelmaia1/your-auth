@@ -13,4 +13,6 @@ public interface UserSessionRepository {
     List<UserSession> findAllByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId);
 
     void revokeById(String id);
+
+    long countByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId);
 }

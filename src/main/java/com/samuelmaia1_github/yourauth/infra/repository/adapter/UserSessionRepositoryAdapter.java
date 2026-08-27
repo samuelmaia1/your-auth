@@ -45,4 +45,9 @@ public class UserSessionRepositoryAdapter implements UserSessionRepository {
     public void revokeById(String id) {
         repository.revokeById(id);
     }
+
+    @Override
+    public long countByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId) {
+        return repository.countByProjectIdAndUserIdAndRevokedAtIsNull(projectId, userId);
+    }
 }

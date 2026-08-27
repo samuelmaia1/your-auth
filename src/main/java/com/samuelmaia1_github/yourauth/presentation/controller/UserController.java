@@ -2,16 +2,16 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedProjectApiKey;
 import com.samuelmaia1_github.yourauth.domain.auth.UserAuthService;
-import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshTokenService;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.TokenDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginSessionDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserTokensResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.UserPresentationMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -21,12 +21,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
-    private final UserRefreshTokenService refreshTokenService;
     private final UserAuthService userAuthService;
 
     @PostMapping
@@ -47,20 +48,25 @@ public class UserController {
             @Valid @RequestBody UserLoginDTO credentials,
             @AuthenticationPrincipal AuthenticatedProjectApiKey authenticatedApiKey,
             @RequestHeader(
-                    value = HttpHeaders.USER_AGENT,
+                    value = "X-Forwarded-User-Agent",
                     required = false
             ) String userAgent,
-            HttpServletRequest request
+            @RequestHeader(
+                    value = "X-End-User-IP",
+                    required = false
+            ) String ipAddress,
+            @RequestHeader(
+                    value = "X-Device-Name",
+                    required = false
+            ) String deviceName
     ) {
-        UserLoginResponseDTO responseDTO = userAuthService.
-                login(credentials, authenticatedApiKey.projectId(), request.getRemoteAddr(), userAgent);
+        UserLoginSessionDTO loginSession = userAuthService.
+                login(credentials, authenticatedApiKey.projectId(), ipAddress, userAgent, deviceName);
 
-        UserResponseDTO user = responseDTO.user();
-
+        UserLoginResponseDTO responseDTO = loginSession.response();
         TokenDTO accessToken = responseDTO.token();
 
-        TokenDTO refreshToken = refreshTokenService
-                .createUserRefreshToken(authenticatedApiKey.projectId(), user.id(), userAgent);
+        TokenDTO refreshToken = loginSession.refreshToken();
 
         ResponseCookie refreshCookie = buildRefreshCookie(refreshToken);
         ResponseCookie accessCookie = buildAccessCookie(accessToken);
@@ -70,6 +76,36 @@ public class UserController {
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .body(responseDTO);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Void> refresh(
+            @CookieValue("refresh_token") String refreshToken
+    ) {
+        UserTokensResponseDTO tokens = userAuthService.refreshUserSession(refreshToken);
+
+        ResponseCookie refreshCookie = buildRefreshCookie(tokens.refreshToken());
+        ResponseCookie accessCookie = buildAccessCookie(tokens.accessToken());
+
+        return ResponseEntity
+                .ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .build();
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue("refresh_token") String refreshToken
+    ) {
+        System.out.println(refreshToken);
+        userAuthService.logoutUserSession(refreshToken);
+
+        return ResponseEntity
+                .noContent()
+                .header(HttpHeaders.SET_COOKIE, clearCookie("refresh_token").toString())
+                .header(HttpHeaders.SET_COOKIE, clearCookie("access-token").toString())
+                .build();
     }
 
     private ResponseCookie buildRefreshCookie(TokenDTO refreshToken) {
@@ -89,6 +125,16 @@ public class UserController {
                 .path("/")
                 .sameSite("None")
                 .maxAge(accessToken.duration())
+                .build();
+    }
+
+    private ResponseCookie clearCookie(String name) {
+        return ResponseCookie.from(name, "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .sameSite("None")
+                .maxAge(Duration.ZERO)
                 .build();
     }
 }

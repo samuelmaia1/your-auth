@@ -57,6 +57,8 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.POST, "/accounts/create").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/users/refresh").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/users/logout").permitAll()
                             .anyRequest().authenticated()
                 )
                 .addFilterBefore(projectApiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

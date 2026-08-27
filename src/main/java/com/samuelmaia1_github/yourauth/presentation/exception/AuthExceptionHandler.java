@@ -1,10 +1,7 @@
 package com.samuelmaia1_github.yourauth.presentation.exception;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.samuelmaia1_github.yourauth.domain.auth.exceptions.GenerateTokenFailException;
-import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidCredentialsException;
-import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
-import com.samuelmaia1_github.yourauth.domain.auth.exceptions.LoginBlockedException;
+import com.samuelmaia1_github.yourauth.domain.auth.exceptions.*;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.ExpiredRefreshTokenException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenHashException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenReuseException;
@@ -55,6 +52,11 @@ public class AuthExceptionHandler {
     @ExceptionHandler(LoginBlockedException.class)
     public ResponseEntity<ErrorResponse> handleLoginBlocked(LoginBlockedException exception) {
         return buildError(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
+    @ExceptionHandler(MaxActiveSessionsExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxActiveSessionsExceeded(MaxActiveSessionsExceededException exception) {
+        return buildError(HttpStatus.CONFLICT, exception.getMessage());
     }
 
     private ResponseEntity<ErrorResponse> buildError(HttpStatus status, String message) {
