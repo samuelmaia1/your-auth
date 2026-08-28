@@ -98,7 +98,6 @@ public class UserController {
     public ResponseEntity<Void> logout(
             @CookieValue("refresh_token") String refreshToken
     ) {
-        System.out.println(refreshToken);
         userAuthService.logoutUserSession(refreshToken);
 
         return ResponseEntity

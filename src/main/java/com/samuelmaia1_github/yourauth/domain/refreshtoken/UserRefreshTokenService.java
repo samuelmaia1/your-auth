@@ -92,7 +92,6 @@ public class UserRefreshTokenService {
     public void logout(String currentRawToken) {
         UserRefreshToken currentToken = getToken(hash(currentRawToken));
         System.out.println(currentToken.getSessionId());
-        revokeSession(currentToken.getSessionId());
     }
 
     @Transactional
