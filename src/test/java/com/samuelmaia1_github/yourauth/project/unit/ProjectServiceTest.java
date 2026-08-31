@@ -9,6 +9,8 @@ import com.samuelmaia1_github.yourauth.domain.project.ProjectPolicy;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectRepository;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectService;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectStatus;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigRepository;
@@ -50,6 +52,7 @@ public class ProjectServiceTest {
         ProjectService service = new ProjectService(
                 projectRepository,
                 passwordConfigRepository,
+                stubAuthConfigRepository(),
                 projectMemberRepository,
                 new StubAccountRepository(Optional.of(Account.builder().id("account-id").build())),
                 policy
@@ -84,8 +87,9 @@ public class ProjectServiceTest {
         ProjectService service = new ProjectService(
                 projectRepository,
                 passwordConfigRepository,
+                stubAuthConfigRepository(),
                 projectMemberRepository,
-                new StubAccountRepository(Optional.of(Account.builder().id("account-id").build())),
+                new StubAccountRepository(Optional.empty()),
                 policy
         );
 
@@ -221,10 +225,25 @@ public class ProjectServiceTest {
         return new ProjectService(
                 projectRepository,
                 passwordConfigRepository,
+                stubAuthConfigRepository(),
                 projectMemberRepository,
                 new StubAccountRepository(Optional.empty()),
                 policy
         );
+    }
+
+    private AuthConfigRepository stubAuthConfigRepository() {
+        return new AuthConfigRepository() {
+            @Override
+            public AuthConfig save(AuthConfig config) {
+                return config;
+            }
+
+            @Override
+            public Optional<AuthConfig> findByProjectId(String projectId) {
+                return Optional.empty();
+            }
+        };
     }
 
     private Project project() {

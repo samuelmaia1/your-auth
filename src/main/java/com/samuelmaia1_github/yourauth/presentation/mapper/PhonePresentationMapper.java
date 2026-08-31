@@ -5,6 +5,10 @@ import com.samuelmaia1_github.yourauth.presentation.dto.shared.PhoneDTO;
 
 public class PhonePresentationMapper {
     public static Phone toDomain(PhoneDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
         return Phone
                 .builder()
                 .ddd(dto.ddd())
@@ -13,6 +17,10 @@ public class PhonePresentationMapper {
     }
 
     public static PhoneDTO toDTO(Phone phone) {
+        if (phone == null) {
+            return null;
+        }
+
         return new PhoneDTO(
                 phone.getDdd(),
                 phone.getNumber()

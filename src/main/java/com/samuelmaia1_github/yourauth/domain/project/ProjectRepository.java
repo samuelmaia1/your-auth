@@ -19,4 +19,8 @@ public interface ProjectRepository {
     PageResult<Project> findAllByMemberAccountId(String accountId, Pagination pagination);
 
     void deleteById(String id);
+
+    default boolean existsById(String id) {
+        return findById(id).isPresent();
+    }
 }

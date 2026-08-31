@@ -1,8 +1,12 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
-import com.samuelmaia1_github.yourauth.domain.auth.AuthService;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.*;
+import com.samuelmaia1_github.yourauth.domain.auth.AccountAuthService;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountRefreshRequestDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountTokensResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginMobileResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginResponseDTO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -16,13 +20,14 @@ import java.time.Duration;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final AuthService service;
+    private final AccountAuthService service;
     private final Duration refreshTokenDuration;
     private final Duration accessTokenDuration;
 
     public AuthController(
-            AuthService service,
-            @Value("${api.security.refresh-token.duration}") Duration refreshTokenDuration,
+            AccountAuthService service,
+            @Value("${api.security.account-refresh-token.duration:${api.security.refresh-token.duration}}")
+            Duration refreshTokenDuration,
             @Value("${api.security.access-token.duration}") Duration accessTokenDuration
     ) {
         this.service = service;
@@ -43,7 +48,7 @@ public class AuthController {
         AccountResponseDTO account = loginData.account();
         String accessToken = loginData.token();
 
-        String rawRefreshToken = service.generateRefreshToken(account.id(), userAgent);
+        String rawRefreshToken = service.generateAccountRefreshToken(account.id(), userAgent);
 
         ResponseCookie refreshCookie = buildRefreshCookie(rawRefreshToken);
         ResponseCookie accessCookie = buildAccessCookie(accessToken);
@@ -68,7 +73,7 @@ public class AuthController {
         AccountResponseDTO account = loginData.account();
         String accessToken = loginData.token();
 
-        String rawRefreshToken = service.generateRefreshToken(account.id(), userAgent);
+        String rawRefreshToken = service.generateAccountRefreshToken(account.id(), userAgent);
 
         return ResponseEntity
                 .ok()
@@ -76,10 +81,10 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<TokensResponseDTO> refreshToken(
+    public ResponseEntity<AccountTokensResponseDTO> refreshToken(
             @CookieValue("refresh_token") String refreshToken
     ) {
-        TokensResponseDTO tokens = service.refreshSession(refreshToken);
+        AccountTokensResponseDTO tokens = service.refreshAccountSession(refreshToken);
 
         ResponseCookie refreshCookie = buildRefreshCookie(tokens.refreshToken());
         ResponseCookie accessCookie = buildAccessCookie(tokens.accessToken());
@@ -92,10 +97,10 @@ public class AuthController {
     }
 
     @PostMapping("/mobile/refresh")
-    public ResponseEntity<TokensResponseDTO> refreshMobileToken(
-            @Valid @RequestBody RefreshRequestDTO requestDTO
+    public ResponseEntity<AccountTokensResponseDTO> refreshMobileToken(
+            @Valid @RequestBody AccountRefreshRequestDTO requestDTO
     ) {
-        TokensResponseDTO tokens = service.refreshSession(requestDTO.refreshToken());
+        AccountTokensResponseDTO tokens = service.refreshAccountSession(requestDTO.refreshToken());
 
         return ResponseEntity
                 .ok()

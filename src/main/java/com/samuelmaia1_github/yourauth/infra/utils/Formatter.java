@@ -2,6 +2,9 @@ package com.samuelmaia1_github.yourauth.infra.utils;
 
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @NoArgsConstructor
 public class Formatter {
     public static String onlyDigits(String value) {
@@ -49,5 +52,12 @@ public class Formatter {
                 "(\\d{5})(\\d{3})",
                 "$1-$2"
         );
+    }
+
+    public static String formatLocalDateTime(LocalDateTime dateTime) {
+        DateTimeFormatter format =
+                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        return dateTime.format(format);
     }
 }

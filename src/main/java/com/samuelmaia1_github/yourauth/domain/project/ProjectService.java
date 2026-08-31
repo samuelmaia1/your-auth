@@ -4,6 +4,8 @@ import com.samuelmaia1_github.yourauth.domain.account.AccountRepository;
 import com.samuelmaia1_github.yourauth.domain.account.exceptions.AccountNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFoundException;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
@@ -27,12 +29,18 @@ public class ProjectService {
 
     private final ProjectRepository repository;
     private final PasswordConfigRepository passwordConfigRepository;
+    private final AuthConfigRepository authConfigRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final AccountRepository accountRepository;
     private final ProjectPolicy policy;
 
     @Transactional
     public Project create(Project project, PasswordConfig requestedPasswordConfig) {
+        return create(project, requestedPasswordConfig, null);
+    }
+
+    @Transactional
+    public Project create(Project project, PasswordConfig requestedPasswordConfig, AuthConfig requestedAuthConfig) {
         accountRepository.findById(project.getOwnerAccountId())
                 .orElseThrow(AccountNotFoundException::new);
 
@@ -52,6 +60,13 @@ public class ProjectService {
         passwordConfig.assignToProject(createdProject.getId());
 
         passwordConfigRepository.save(passwordConfig);
+
+        AuthConfig authConfig =
+                requestedAuthConfig == null ? AuthConfig.createDefault() : requestedAuthConfig;
+
+        authConfig.assignToProject(createdProject.getId());
+
+        authConfigRepository.save(authConfig);
 
         return createdProject;
     }

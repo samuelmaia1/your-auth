@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.project.Project;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectService;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
@@ -13,6 +14,7 @@ import com.samuelmaia1_github.yourauth.presentation.dto.project.ProjectResponseD
 import com.samuelmaia1_github.yourauth.presentation.dto.project.UpdateProjectDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.PasswordConfigPresentationMapper;
 import com.samuelmaia1_github.yourauth.presentation.mapper.ProjectPresentationMapper;
+import com.samuelmaia1_github.yourauth.presentation.mapper.AuthConfigPresentationMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -42,11 +44,13 @@ public class ProjectController {
     ) {
         Project project = ProjectPresentationMapper.toDomain(dto, authenticatedAccount.id());
         PasswordConfig passwordConfig = PasswordConfigPresentationMapper.toDomain(dto.passwordConfig());
+        AuthConfig authConfig = AuthConfigPresentationMapper.toDomain(dto.authConfig());
 
         Project createdProject = service
                 .create(
                         project,
-                        passwordConfig
+                        passwordConfig,
+                        authConfig
                 );
 
         return ResponseEntity
