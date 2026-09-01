@@ -8,18 +8,22 @@ import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.TokenDTO;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginDTO;
-import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.UserLoginResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UpdateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.UserPresentationMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +31,50 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/projects/{projectId}/users")
+@Tag(name = "Project Users", description = "Gestao administrativa dos usuarios finais de um projeto.")
+@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "accessTokenCookie")
 public class ProjectUserController {
     private final UserService userService;
     private final UserAuthService userAuthService;
     private final UserRefreshTokenService refreshTokenService;
 
     @PostMapping
+    @Operation(summary = "Cria um usuario final em um projeto")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Usuario criado.",
+                    content = @Content(schema = @Schema(implementation = UserResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Corpo da requisicao invalido ou erro de validacao.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem acesso ao projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto nao encontrado.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Usuario ja existente no projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
     public ResponseEntity<UserResponseDTO> create(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @Valid @RequestBody CreateUserDTO dto
@@ -47,7 +88,32 @@ public class ProjectUserController {
     }
 
     @GetMapping
+    @Operation(summary = "Lista usuarios finais de um projeto")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuarios encontrados."),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Parametros de paginacao invalidos.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem acesso ao projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto nao encontrado.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
     public ResponseEntity<PageResult<UserResponseDTO>> findAll(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @RequestParam(defaultValue = "0") int page,
@@ -63,7 +129,31 @@ public class ProjectUserController {
     }
 
     @GetMapping("/{userId}")
+    @Operation(summary = "Busca um usuario final pelo id")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Usuario encontrado.",
+                    content = @Content(schema = @Schema(implementation = UserResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem acesso ao projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto ou usuario nao encontrados.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
     public ResponseEntity<UserResponseDTO> findById(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @PathVariable String userId
@@ -74,7 +164,36 @@ public class ProjectUserController {
     }
 
     @PutMapping("/{userId}")
+    @Operation(summary = "Atualiza um usuario final")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Usuario atualizado.",
+                    content = @Content(schema = @Schema(implementation = UserResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Corpo da requisicao invalido ou erro de validacao.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem acesso ao projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto ou usuario nao encontrados.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
     public ResponseEntity<UserResponseDTO> update(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @PathVariable String userId,
@@ -87,7 +206,27 @@ public class ProjectUserController {
     }
 
     @DeleteMapping("/{userId}")
+    @Operation(summary = "Remove um usuario final")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Usuario removido."),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem acesso ao projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto ou usuario nao encontrados.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
     public ResponseEntity<Void> delete(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @PathVariable String userId

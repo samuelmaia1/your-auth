@@ -1,0 +1,2998 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Your Auth API",
+    "description": "API de autenticacao e identidade para contas proprietarias, projetos, usuarios finais, sessoes, refresh tokens e API keys de projeto.",
+    "version": "0.0.1-SNAPSHOT"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Ambiente local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Projects",
+      "description": "Gestao de projetos de uma conta proprietaria."
+    },
+    {
+      "name": "Project API Keys",
+      "description": "Gestao de API keys usadas por clientes terceiros."
+    },
+    {
+      "name": "Project Users",
+      "description": "Gestao administrativa dos usuarios finais de um projeto."
+    },
+    {
+      "name": "Project Auth Config",
+      "description": "Configuracoes de autenticacao de um projeto."
+    },
+    {
+      "name": "Accounts",
+      "description": "Cadastro de contas proprietarias do Your Auth."
+    },
+    {
+      "name": "Account Authentication",
+      "description": "Login e renovacao de sessao para contas proprietarias."
+    },
+    {
+      "name": "Public Project Users",
+      "description": "Endpoints consumidos por aplicacoes terceiras usando API key de projeto."
+    }
+  ],
+  "paths": {
+    "/projects/{projectId}/users/{userId}": {
+      "get": {
+        "tags": [
+          "Project Users"
+        ],
+        "summary": "Busca um usuario final pelo id",
+        "operationId": "findById",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou usuario nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Project Users"
+        ],
+        "summary": "Atualiza um usuario final",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario atualizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou usuario nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Project Users"
+        ],
+        "summary": "Remove um usuario final",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Usuario removido."
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou usuario nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/auth-config": {
+      "get": {
+        "tags": [
+          "Project Auth Config"
+        ],
+        "summary": "Busca a configuracao de autenticacao de um projeto",
+        "operationId": "getAuthConfig",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuracao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfigDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou configuracao nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Project Auth Config"
+        ],
+        "summary": "Atualiza a configuracao de autenticacao de um projeto",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthConfigDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Configuracao atualizada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfigDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou configuracao nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Busca um projeto pelo id",
+        "operationId": "findById_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projeto encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Atualiza um projeto",
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Projeto atualizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Remove um projeto",
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Projeto removido."
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/users": {
+      "post": {
+        "tags": [
+          "Public Project Users"
+        ],
+        "summary": "Cria um usuario final via API key",
+        "description": "Cria um usuario final no projeto associado a API key enviada.",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario criado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido, erro de validacao ou API key mal formatada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API key ausente, invalida, expirada ou revogada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "API key sem permissao para criar usuarios.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Usuario ja existente no projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao processar API key do projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "projectApiKey": []
+          }
+        ]
+      }
+    },
+    "/users/refresh": {
+      "post": {
+        "tags": [
+          "Public Project Users"
+        ],
+        "summary": "Renova a sessao web de um usuario final",
+        "description": "Usa o cookie refresh_token para gerar novos tokens e redefinir cookies HTTP-only.",
+        "operationId": "refresh",
+        "parameters": [
+          {
+            "name": "refresh_token",
+            "in": "cookie",
+            "description": "Refresh token HTTP-only recebido no login do usuario final.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessao renovada. Novos cookies access-token e refresh_token sao enviados no header Set-Cookie.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Define novos cookies HTTP-only access-token e refresh_token.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cookie refresh_token ausente.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario ou sessao associados ao refresh token nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao validar, armazenar ou gerar tokens.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "refreshTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/users/logout": {
+      "post": {
+        "tags": [
+          "Public Project Users"
+        ],
+        "summary": "Encerra a sessao web de um usuario final",
+        "description": "Revoga a sessao associada ao refresh token e limpa os cookies da sessao.",
+        "operationId": "logout",
+        "parameters": [
+          {
+            "name": "refresh_token",
+            "in": "cookie",
+            "description": "Refresh token HTTP-only recebido no login do usuario final.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessao encerrada e cookies limpos.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Limpa os cookies HTTP-only access-token e refresh_token.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cookie refresh_token ausente.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "refreshTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/users/login": {
+      "post": {
+        "tags": [
+          "Public Project Users"
+        ],
+        "summary": "Autentica um usuario final via API key",
+        "description": "Valida credenciais no projeto associado a API key e define cookies HTTP-only de access token e refresh token.",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "X-Forwarded-User-Agent",
+            "in": "header",
+            "description": "User agent real do usuario final repassado pela aplicacao cliente.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Mozilla/5.0"
+          },
+          {
+            "name": "X-End-User-IP",
+            "in": "header",
+            "description": "IP real do usuario final repassado pela aplicacao cliente.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "203.0.113.10"
+          },
+          {
+            "name": "X-Device-Name",
+            "in": "header",
+            "description": "Nome amigavel do dispositivo usado na sessao.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Chrome macOS"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLoginDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario autenticado. Os cookies access-token e refresh_token sao enviados no header Set-Cookie.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Define os cookies HTTP-only access-token e refresh_token.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLoginResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido, erro de validacao ou API key mal formatada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais invalidas, login bloqueado ou API key invalida.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "API key sem permissao para autenticar usuarios.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Limite de sessoes ativas atingido.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao gerar tokens ou processar API key do projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "projectApiKey": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/users": {
+      "get": {
+        "tags": [
+          "Project Users"
+        ],
+        "summary": "Lista usuarios finais de um projeto",
+        "operationId": "findAll",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuarios encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultUserResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametros de paginacao invalidos.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Project Users"
+        ],
+        "summary": "Cria um usuario final em um projeto",
+        "operationId": "create_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario criado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Usuario ja existente no projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/api-keys": {
+      "get": {
+        "tags": [
+          "Project API Keys"
+        ],
+        "summary": "Lista API keys de um projeto",
+        "operationId": "findAll_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API keys encontradas.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultProjectApiKeyResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametros de paginacao invalidos.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Project API Keys"
+        ],
+        "summary": "Cria uma API key de projeto",
+        "description": "Retorna a chave bruta apenas na resposta de criacao. Responses futuras exibem somente metadados.",
+        "operationId": "create_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectApiKeyDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "API key criada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedProjectApiKeyResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/api-keys/{apiKeyId}/revoke": {
+      "post": {
+        "tags": [
+          "Project API Keys"
+        ],
+        "summary": "Revoga uma API key de projeto",
+        "operationId": "revoke",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "apiKeyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key revogada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectApiKeyResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou API key nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "API key ja estava revogada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/create": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Cria um projeto",
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Projeto criado com sucesso.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ja existe projeto conflitante para a conta.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Renova a sessao web da conta",
+        "description": "Usa o cookie refresh_token para gerar novos tokens e redefinir os cookies HTTP-only.",
+        "operationId": "refreshToken",
+        "parameters": [
+          {
+            "name": "refresh_token",
+            "in": "cookie",
+            "description": "Refresh token HTTP-only recebido no login web.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessao renovada. Novos cookies access-token e refresh_token sao enviados no header Set-Cookie.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Define novos cookies HTTP-only access-token e refresh_token.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountTokensResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cookie refresh_token ausente.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta associada ao refresh token nao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao validar, armazenar ou gerar tokens.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "refreshTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/auth/mobile/refresh": {
+      "post": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Renova a sessao mobile da conta",
+        "description": "Usa o refresh token enviado no corpo da requisicao para gerar um novo par de tokens.",
+        "operationId": "refreshMobileToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRefreshRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sessao renovada com access token e refresh token retornados no body.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountTokensResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta associada ao refresh token nao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao validar, armazenar ou gerar tokens.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/mobile/login": {
+      "post": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Autentica uma conta proprietaria no fluxo mobile",
+        "description": "Valida as credenciais da conta e retorna access token e refresh token no corpo da resposta.",
+        "operationId": "mobileLogin",
+        "parameters": [
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identificador do client/dispositivo usado para registrar o refresh token.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "YourAuthMobile/1.0"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Conta autenticada com tokens retornados no body.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginMobileResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais invalidas ou login bloqueado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao gerar tokens da sessao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Autentica uma conta proprietaria no fluxo web",
+        "description": "Valida as credenciais da conta, cria uma sessao e define cookies HTTP-only de access token e refresh token.",
+        "operationId": "login_1",
+        "parameters": [
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identificador do client/dispositivo usado para registrar o refresh token.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Mozilla/5.0"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Conta autenticada. Os cookies access-token e refresh_token sao enviados no header Set-Cookie.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Define os cookies HTTP-only access-token e refresh_token.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais invalidas ou login bloqueado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao gerar tokens da sessao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/create": {
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Cria uma conta proprietaria",
+        "description": "Cadastra uma conta que podera criar e gerenciar projetos no Your Auth.",
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccountDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Conta criada com sucesso.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ja existe conta com o e-mail ou CPF informado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Lista projetos da conta autenticada",
+        "operationId": "findAll_2",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projetos encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultProjectResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametros de paginacao invalidos.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/api-keys/{apiKeyId}": {
+      "get": {
+        "tags": [
+          "Project API Keys"
+        ],
+        "summary": "Busca uma API key de projeto pelo id",
+        "operationId": "findById_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "apiKeyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectApiKeyResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou API key nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Project API Keys"
+        ],
+        "summary": "Remove uma API key de projeto",
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "apiKeyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "API key removida."
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou API key nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{id}/password-config": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Busca a configuracao de senha de um projeto",
+        "operationId": "getPasswordConfigById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuracao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordConfigDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou configuracao nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PhoneDTO": {
+        "type": "object",
+        "properties": {
+          "ddd": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\d{2}"
+          },
+          "number": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\d{8,9}"
+          }
+        },
+        "required": [
+          "ddd",
+          "number"
+        ]
+      },
+      "UpdateUserDTO": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "phone": {
+            "$ref": "#/components/schemas/PhoneDTO"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "UserResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED",
+              "BLOCKED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastPasswordChangedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastFailedLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failedLoginAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lockedUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginIpAddress": {
+            "type": "string"
+          },
+          "lastLoginUserAgent": {
+            "type": "string"
+          },
+          "phone": {
+            "$ref": "#/components/schemas/PhoneDTO"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "error": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AuthConfigDTO": {
+        "type": "object",
+        "properties": {
+          "accessTokenExpirationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 1440,
+            "minimum": 1
+          },
+          "refreshTokenExpirationDays": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 1
+          },
+          "sessionMode": {
+            "type": "string",
+            "enum": [
+              "MULTIPLE_DEVICES",
+              "SINGLE_ACTIVE_SESSION",
+              "LIMITED_ACTIVE_SESSIONS"
+            ]
+          },
+          "maxActiveSessions": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "refreshTokenRotationEnabled": {
+            "type": "boolean"
+          },
+          "revokeTokensOnPasswordChange": {
+            "type": "boolean"
+          },
+          "failedLoginAttemptsLimit": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 20,
+            "minimum": 1
+          },
+          "lockDurationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 1440,
+            "minimum": 1
+          },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
+          "registrationEnabled": {
+            "type": "boolean"
+          },
+          "maxActiveSessionsRequiredWhenLimited": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateProjectDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED"
+            ]
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "DEVELOPMENT",
+              "PRODUCTION"
+            ]
+          },
+          "tokenAudience": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "environment",
+          "name",
+          "status",
+          "tokenAudience"
+        ]
+      },
+      "ProjectResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "ownerAccountId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED"
+            ]
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "DEVELOPMENT",
+              "PRODUCTION"
+            ]
+          },
+          "tokenAudience": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateUserDTO": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "phone": {
+            "$ref": "#/components/schemas/PhoneDTO"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UserLoginDTO": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "TokenDTO": {
+        "type": "object",
+        "properties": {
+          "raw": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          }
+        }
+      },
+      "UserLoginResponseDTO": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserResponseDTO"
+          },
+          "token": {
+            "$ref": "#/components/schemas/TokenDTO"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateProjectApiKeyDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "USERS_READ",
+                "USERS_WRITE",
+                "AUTH_LOGIN",
+                "AUTH_REGISTER"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "expiresInHours": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 87600,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "name",
+          "scopes"
+        ]
+      },
+      "CreatedProjectApiKeyResponseDTO": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "apiKey": {
+            "$ref": "#/components/schemas/ProjectApiKeyResponseDTO"
+          }
+        }
+      },
+      "ProjectApiKeyResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "keyId": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "secretLastFour": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "USERS_READ",
+                "USERS_WRITE",
+                "AUTH_LOGIN",
+                "AUTH_REGISTER"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "createdByAccountId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateProjectDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "DEVELOPMENT",
+              "PRODUCTION"
+            ]
+          },
+          "tokenAudience": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "passwordConfig": {
+            "$ref": "#/components/schemas/PasswordConfigDTO"
+          },
+          "authConfig": {
+            "$ref": "#/components/schemas/AuthConfigDTO"
+          }
+        },
+        "required": [
+          "environment",
+          "name",
+          "tokenAudience"
+        ]
+      },
+      "PasswordConfigDTO": {
+        "type": "object",
+        "properties": {
+          "minSize": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 120,
+            "minimum": 1
+          },
+          "maxSize": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 120,
+            "minimum": 1
+          },
+          "numberRequired": {
+            "type": "boolean"
+          },
+          "uppercaseRequired": {
+            "type": "boolean"
+          },
+          "lowercaseRequired": {
+            "type": "boolean"
+          },
+          "specialCharRequired": {
+            "type": "boolean"
+          },
+          "validRange": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AccountTokensResponseDTO": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "AccountRefreshRequestDTO": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "LoginDTO": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "cpf": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "AccountResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "address": {
+            "$ref": "#/components/schemas/AddressDTO"
+          },
+          "phone": {
+            "$ref": "#/components/schemas/PhoneDTO"
+          },
+          "CPF": {
+            "type": "string"
+          }
+        }
+      },
+      "AddressDTO": {
+        "type": "object",
+        "properties": {
+          "cep": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\d{8}|\\d{5}-\\d{3}"
+          },
+          "street": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "neighborhood": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2
+          },
+          "number": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "cep",
+          "city",
+          "neighborhood",
+          "number",
+          "state",
+          "street"
+        ]
+      },
+      "LoginMobileResponseDTO": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountResponseDTO"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateAccountDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"
+          },
+          "CPF": {
+            "type": "string",
+            "minLength": 1
+          },
+          "address": {
+            "$ref": "#/components/schemas/AddressDTO"
+          },
+          "phone": {
+            "$ref": "#/components/schemas/PhoneDTO"
+          }
+        },
+        "required": [
+          "CPF",
+          "address",
+          "email",
+          "lastName",
+          "name",
+          "password",
+          "phone"
+        ]
+      },
+      "PageResultProjectResponseDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectResponseDTO"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageResultUserResponseDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserResponseDTO"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageResultProjectApiKeyResponseDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectApiKeyResponseDTO"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "JWT de conta proprietaria enviado no header Authorization: Bearer <token>.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "projectApiKey": {
+        "type": "apiKey",
+        "description": "API key de projeto usada por clientes terceiros. Tambem pode ser enviada como Authorization: Bearer ya_sk_...",
+        "name": "X-API-Key",
+        "in": "header"
+      },
+      "accessTokenCookie": {
+        "type": "apiKey",
+        "description": "Cookie HTTP-only usado pelo fluxo web para autenticacao.",
+        "name": "access-token",
+        "in": "cookie"
+      },
+      "refreshTokenCookie": {
+        "type": "apiKey",
+        "description": "Cookie HTTP-only usado pelo fluxo web para renovar a sessao.",
+        "name": "refresh_token",
+        "in": "cookie"
+      }
+    }
+  }
+}
