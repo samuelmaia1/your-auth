@@ -117,6 +117,10 @@ e domínio e devem evitar lógica de negócio. Exceptions de domínio devem ser
 traduzidas para HTTP em `presentation.exception`, retornando `ErrorResponse`
 quando aplicável.
 
+Sempre que uma mudança alterar o contrato HTTP da API, como rota, método,
+request/response, status, headers ou autenticação, atualize também
+`docs/api/openapi.json` quando pertinente.
+
 ## Padrões de Código
 
 - Preserve os nomes e a organização por contexto de negócio: `account`,
@@ -233,6 +237,7 @@ Durante a edição:
 - coloque regra de negócio no domínio;
 - coloque detalhes técnicos na infra;
 - coloque contratos HTTP na presentation;
+- atualize `docs/api/openapi.json` quando a mudança afetar o contrato da API;
 - preserve nomes, mensagens e estilo do projeto.
 
 Antes de finalizar:

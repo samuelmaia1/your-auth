@@ -4,6 +4,7 @@ import com.samuelmaia1_github.yourauth.domain.account.Account;
 import com.samuelmaia1_github.yourauth.domain.account.AccountPolicy;
 import com.samuelmaia1_github.yourauth.domain.account.AccountRepository;
 import com.samuelmaia1_github.yourauth.domain.account.AccountService;
+import com.samuelmaia1_github.yourauth.domain.account.exceptions.AccountNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
 import com.samuelmaia1_github.yourauth.infra.interfaces.IPasswordEncoder;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AccountServiceTest {
     @Test
@@ -33,6 +35,53 @@ public class AccountServiceTest {
         assertThat(createdAccount.getPassword()).isEqualTo("encoded-password");
     }
 
+    @Test
+    void shouldFindAccountByAuthenticatedId() {
+        Account account = Account.builder()
+                .id("account-id")
+                .email("email@email.com")
+                .build();
+        RecordingAccountRepository repository = new RecordingAccountRepository();
+        repository.accountById = Optional.of(account);
+        AccountService service = new AccountService(repository, new RecordingAccountPolicy(), new StubPasswordEncoder());
+
+        Account foundAccount = service.findByIdOrEmail("account-id", "email@email.com");
+
+        assertThat(foundAccount).isSameAs(account);
+        assertThat(repository.searchedId).isEqualTo("account-id");
+        assertThat(repository.searchedEmail).isNull();
+    }
+
+    @Test
+    void shouldFindAccountByAuthenticatedEmailWhenIdDoesNotMatch() {
+        Account account = Account.builder()
+                .id("account-id")
+                .email("email@email.com")
+                .build();
+        RecordingAccountRepository repository = new RecordingAccountRepository();
+        repository.accountByEmail = Optional.of(account);
+        AccountService service = new AccountService(repository, new RecordingAccountPolicy(), new StubPasswordEncoder());
+
+        Account foundAccount = service.findByIdOrEmail("missing-id", "email@email.com");
+
+        assertThat(foundAccount).isSameAs(account);
+        assertThat(repository.searchedId).isEqualTo("missing-id");
+        assertThat(repository.searchedEmail).isEqualTo("email@email.com");
+    }
+
+    @Test
+    void shouldThrowWhenAuthenticatedAccountIsNotFound() {
+        RecordingAccountRepository repository = new RecordingAccountRepository();
+        AccountService service = new AccountService(repository, new RecordingAccountPolicy(), new StubPasswordEncoder());
+
+        assertThatThrownBy(() -> service.findByIdOrEmail("missing-id", "missing@email.com"))
+                .isInstanceOf(AccountNotFoundException.class)
+                .hasMessage("Conta não encontrada.");
+
+        assertThat(repository.searchedId).isEqualTo("missing-id");
+        assertThat(repository.searchedEmail).isEqualTo("missing@email.com");
+    }
+
     private static class RecordingAccountPolicy extends AccountPolicy {
         private Account checkedAccount;
 
@@ -48,6 +97,10 @@ public class AccountServiceTest {
 
     private static class RecordingAccountRepository implements AccountRepository {
         private Account savedAccount;
+        private Optional<Account> accountById = Optional.empty();
+        private Optional<Account> accountByEmail = Optional.empty();
+        private String searchedId;
+        private String searchedEmail;
 
         @Override
         public Account save(Account account) {
@@ -57,12 +110,14 @@ public class AccountServiceTest {
 
         @Override
         public Optional<Account> findById(String id) {
-            return Optional.empty();
+            searchedId = id;
+            return accountById;
         }
 
         @Override
         public Optional<Account> findByEmail(String email) {
-            return Optional.empty();
+            searchedEmail = email;
+            return accountByEmail;
         }
 
         @Override

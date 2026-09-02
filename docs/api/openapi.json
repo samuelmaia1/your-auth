@@ -1916,6 +1916,106 @@
         }
       }
     },
+    "/accounts/me": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Busca os dados da conta autenticada",
+        "description": "Retorna os dados da conta proprietaria associada ao token de acesso.",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Conta autenticada encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria ou token de conta invalido.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta nao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/accounts/me/summary": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Busca o resumo da conta autenticada",
+        "description": "Retorna os projetos em que a conta autenticada e membro, com role e metricas resumidas.",
+        "operationId": "summary",
+        "responses": {
+          "200": {
+            "description": "Resumo da conta autenticada encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSummaryResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria ou token de conta invalido.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta nao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
     "/projects": {
       "get": {
         "tags": [
@@ -2780,6 +2880,89 @@
           },
           "CPF": {
             "type": "string"
+          }
+        }
+      },
+      "AccountSummaryResponseDTO": {
+        "type": "object",
+        "properties": {
+          "totalProjects": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalActiveSessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountProjectSummaryResponseDTO"
+            }
+          }
+        }
+      },
+      "AccountProjectSummaryResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "ownerAccountId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED"
+            ]
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "DEVELOPMENT",
+              "PRODUCTION"
+            ]
+          },
+          "tokenAudience": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "DEVELOPER",
+              "VIEWER"
+            ]
+          },
+          "totalUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalActiveSessions": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
