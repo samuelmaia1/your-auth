@@ -3,11 +3,13 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.CreatedProjectApiKey;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKey;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyDetails;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.presentation.dto.projectapikey.CreateProjectApiKeyDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.projectapikey.CreatedProjectApiKeyResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.projectapikey.ProjectApiKeyDetailsResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.projectapikey.ProjectApiKeyResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.mapper.ProjectApiKeyPresentationMapper;
@@ -113,20 +115,20 @@ public class ProjectApiKeyController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<PageResult<ProjectApiKeyResponseDTO>> findAll(
+    public ResponseEntity<PageResult<ProjectApiKeyDetailsResponseDTO>> findAll(
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        PageResult<ProjectApiKey> apiKeys = service.findAllByProjectId(
+        PageResult<ProjectApiKeyDetails> apiKeys = service.findAllByProjectId(
                 projectId,
                 authenticatedAccount.id(),
                 new Pagination(page, size)
         );
 
-        return ResponseEntity.ok(ProjectApiKeyPresentationMapper.toResponseDTO(apiKeys));
+        return ResponseEntity.ok(ProjectApiKeyPresentationMapper.toDetailsResponseDTO(apiKeys));
     }
 
     @GetMapping("/{apiKeyId}")
@@ -135,7 +137,7 @@ public class ProjectApiKeyController {
             @ApiResponse(
                     responseCode = "200",
                     description = "API key encontrada.",
-                    content = @Content(schema = @Schema(implementation = ProjectApiKeyResponseDTO.class))
+                    content = @Content(schema = @Schema(implementation = ProjectApiKeyDetailsResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -153,15 +155,15 @@ public class ProjectApiKeyController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<ProjectApiKeyResponseDTO> findById(
+    public ResponseEntity<ProjectApiKeyDetailsResponseDTO> findById(
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @PathVariable String apiKeyId
     ) {
-        ProjectApiKey apiKey = service.findById(projectId, apiKeyId, authenticatedAccount.id());
+        ProjectApiKeyDetails apiKey = service.findById(projectId, apiKeyId, authenticatedAccount.id());
 
-        return ResponseEntity.ok(ProjectApiKeyPresentationMapper.toResponseDTO(apiKey));
+        return ResponseEntity.ok(ProjectApiKeyPresentationMapper.toDetailsResponseDTO(apiKey));
     }
 
     @PostMapping("/{apiKeyId}/revoke")

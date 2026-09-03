@@ -4,6 +4,7 @@ import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenExcept
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.exceptions.AuthConfigNotFoundException;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.exceptions.ProjectApiKeyAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.ExpiredRefreshTokenException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.exceptions.RefreshTokenReuseException;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSession;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -48,9 +50,10 @@ public class UserRefreshTokenService {
     }
 
     @Transactional
-    public UserRefreshResponseDTO refresh(String currentRawToken) {
+    public UserRefreshResponseDTO refresh(String currentRawToken, String authenticatedProjectId) {
         UserRefreshToken currentToken = getToken(hash(currentRawToken));
 
+        ensureProjectCanManageSession(currentToken, authenticatedProjectId);
         validateToken(currentToken);
         validateSession(currentToken);
 
@@ -89,9 +92,11 @@ public class UserRefreshTokenService {
     }
 
     @Transactional
-    public void logout(String currentRawToken) {
+    public void logout(String currentRawToken, String authenticatedProjectId) {
         UserRefreshToken currentToken = getToken(hash(currentRawToken));
-        System.out.println(currentToken.getSessionId());
+
+        ensureProjectCanManageSession(currentToken, authenticatedProjectId);
+        revokeSession(currentToken.getSessionId());
     }
 
     @Transactional
@@ -114,6 +119,14 @@ public class UserRefreshTokenService {
 
         if (token.isExpired()) {
             throw new ExpiredRefreshTokenException("Refresh token expirado ou revogado");
+        }
+    }
+
+    private void ensureProjectCanManageSession(UserRefreshToken token, String authenticatedProjectId) {
+        if (!Objects.equals(token.getProjectId(), authenticatedProjectId)) {
+            throw new ProjectApiKeyAccessDeniedException(
+                    "A API key não tem permissão para gerenciar sessões deste projeto."
+            );
         }
     }
 

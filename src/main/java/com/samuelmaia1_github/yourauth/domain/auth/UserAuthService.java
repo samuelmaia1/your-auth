@@ -105,8 +105,8 @@ public class UserAuthService {
     }
 
     @Transactional
-    public UserTokensResponseDTO refreshUserSession(String rawRefreshToken) {
-        UserRefreshResponseDTO refreshResponse = refreshTokenService.refresh(rawRefreshToken);
+    public UserTokensResponseDTO refreshUserSession(String rawRefreshToken, String authenticatedProjectId) {
+        UserRefreshResponseDTO refreshResponse = refreshTokenService.refresh(rawRefreshToken, authenticatedProjectId);
 
         AuthConfig authConfig = findAuthConfigOrThrow(refreshResponse.projectId());
         UserSession session = findValidSessionOrThrow(refreshResponse);
@@ -124,8 +124,8 @@ public class UserAuthService {
     }
 
     @Transactional
-    public void logoutUserSession(String rawRefreshToken) {
-        refreshTokenService.logout(rawRefreshToken);
+    public void logoutUserSession(String rawRefreshToken, String authenticatedProjectId) {
+        refreshTokenService.logout(rawRefreshToken, authenticatedProjectId);
     }
 
     private void ensureCanLogin(User user, AuthConfig authConfig) {

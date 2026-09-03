@@ -4,6 +4,7 @@ import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenExcept
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.SessionMode;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.exceptions.ProjectApiKeyAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshTokenGenerator;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.RefreshTokenHasher;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshToken;
@@ -44,7 +45,7 @@ class UserRefreshTokenServiceTest {
                 sessionRepository
         );
 
-        UserRefreshResponseDTO response = service.refresh("current-refresh-token");
+        UserRefreshResponseDTO response = service.refresh("current-refresh-token", PROJECT_ID);
 
         assertThat(response.projectId()).isEqualTo(PROJECT_ID);
         assertThat(response.userId()).isEqualTo(USER_ID);
@@ -77,7 +78,7 @@ class UserRefreshTokenServiceTest {
                 sessionRepository
         );
 
-        assertThatThrownBy(() -> service.refresh("current-refresh-token"))
+        assertThatThrownBy(() -> service.refresh("current-refresh-token", PROJECT_ID))
                 .isInstanceOf(RefreshTokenReuseException.class)
                 .hasMessage("Refresh token reutilizado. A sessão foi encerrada.");
 
@@ -98,7 +99,7 @@ class UserRefreshTokenServiceTest {
                 sessionRepository
         );
 
-        assertThatThrownBy(() -> service.refresh("current-refresh-token"))
+        assertThatThrownBy(() -> service.refresh("current-refresh-token", PROJECT_ID))
                 .isInstanceOf(InvalidTokenException.class)
                 .hasMessage("Sessão inválida ou expirada.");
 
@@ -119,12 +120,58 @@ class UserRefreshTokenServiceTest {
                 sessionRepository
         );
 
-        service.logout("current-refresh-token");
+        service.logout("current-refresh-token", PROJECT_ID);
 
         assertThat(refreshTokenRepository.revokedSessionId).isEqualTo(SESSION_ID);
         assertThat(sessionRepository.revokedSessionId).isEqualTo(SESSION_ID);
         assertThat(refreshTokenRepository.findByHash(hasher.hash("current-refresh-token")).orElseThrow().isRevoked())
                 .isTrue();
+    }
+
+    @Test
+    void shouldDenyRefreshWhenApiKeyBelongsToAnotherProject() {
+        RefreshTokenHasher hasher = new RefreshTokenHasher("test-secret");
+        InMemoryUserRefreshTokenRepository refreshTokenRepository = new InMemoryUserRefreshTokenRepository();
+        RecordingUserSessionRepository sessionRepository = new RecordingUserSessionRepository(activeSession());
+        UserRefreshToken currentToken = currentToken(hasher, null);
+        refreshTokenRepository.save(currentToken);
+        UserRefreshTokenService service = service(
+                hasher,
+                new FixedRefreshTokenGenerator("new-refresh-token"),
+                refreshTokenRepository,
+                sessionRepository
+        );
+
+        assertThatThrownBy(() -> service.refresh("current-refresh-token", "another-project-id"))
+                .isInstanceOf(ProjectApiKeyAccessDeniedException.class)
+                .hasMessage("A API key não tem permissão para gerenciar sessões deste projeto.");
+
+        assertThat(refreshTokenRepository.revokedSessionId).isNull();
+        assertThat(sessionRepository.revokedSessionId).isNull();
+        assertThat(currentToken.isRevoked()).isFalse();
+    }
+
+    @Test
+    void shouldDenyLogoutWhenApiKeyBelongsToAnotherProject() {
+        RefreshTokenHasher hasher = new RefreshTokenHasher("test-secret");
+        InMemoryUserRefreshTokenRepository refreshTokenRepository = new InMemoryUserRefreshTokenRepository();
+        RecordingUserSessionRepository sessionRepository = new RecordingUserSessionRepository(activeSession());
+        UserRefreshToken currentToken = currentToken(hasher, null);
+        refreshTokenRepository.save(currentToken);
+        UserRefreshTokenService service = service(
+                hasher,
+                new FixedRefreshTokenGenerator("new-refresh-token"),
+                refreshTokenRepository,
+                sessionRepository
+        );
+
+        assertThatThrownBy(() -> service.logout("current-refresh-token", "another-project-id"))
+                .isInstanceOf(ProjectApiKeyAccessDeniedException.class)
+                .hasMessage("A API key não tem permissão para gerenciar sessões deste projeto.");
+
+        assertThat(refreshTokenRepository.revokedSessionId).isNull();
+        assertThat(sessionRepository.revokedSessionId).isNull();
+        assertThat(currentToken.isRevoked()).isFalse();
     }
 
     private UserRefreshTokenService service(

@@ -29,6 +29,10 @@
       "description": "Configuracoes de autenticacao de um projeto."
     },
     {
+      "name": "Project User Sessions",
+      "description": "Consulta administrativa de sessoes de usuarios finais."
+    },
+    {
       "name": "Accounts",
       "description": "Cadastro de contas proprietarias do Your Auth."
     },
@@ -747,7 +751,7 @@
           "Public Project Users"
         ],
         "summary": "Renova a sessao web de um usuario final",
-        "description": "Usa o cookie refresh_token para gerar novos tokens e redefinir cookies HTTP-only.",
+        "description": "Usa a API key do projeto e o cookie refresh_token para gerar novos tokens e redefinir cookies HTTP-only.",
         "operationId": "refresh",
         "parameters": [
           {
@@ -784,7 +788,17 @@
             }
           },
           "401": {
-            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "description": "API key ausente ou invalida, ou refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "API key sem permissao para gerenciar a sessao deste projeto.",
             "content": {
               "*/*": {
                 "schema": {
@@ -816,6 +830,7 @@
         },
         "security": [
           {
+            "projectApiKey": [],
             "refreshTokenCookie": []
           }
         ]
@@ -827,7 +842,7 @@
           "Public Project Users"
         ],
         "summary": "Encerra a sessao web de um usuario final",
-        "description": "Revoga a sessao associada ao refresh token e limpa os cookies da sessao.",
+        "description": "Usa a API key do projeto e o cookie refresh_token para revogar a sessao e limpar os cookies.",
         "operationId": "logout",
         "parameters": [
           {
@@ -864,7 +879,17 @@
             }
           },
           "401": {
-            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "description": "API key ausente ou invalida, ou refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "API key sem permissao para gerenciar a sessao deste projeto.",
             "content": {
               "*/*": {
                 "schema": {
@@ -876,6 +901,7 @@
         },
         "security": [
           {
+            "projectApiKey": [],
             "refreshTokenCookie": []
           }
         ]
@@ -1205,6 +1231,105 @@
         ]
       }
     },
+    "/projects/{projectId}/sessions": {
+      "get": {
+        "tags": [
+          "Project User Sessions"
+        ],
+        "summary": "Lista sessoes de usuarios finais de um projeto",
+        "operationId": "findAllSessions",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessoes encontradas.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultUserSessionResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametros de paginacao invalidos.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
     "/projects/{projectId}/api-keys": {
       "get": {
         "tags": [
@@ -1248,7 +1373,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageResultProjectApiKeyResponseDTO"
+                  "$ref": "#/components/schemas/PageResultProjectApiKeyDetailsResponseDTO"
                 }
               }
             }
@@ -2118,7 +2243,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProjectApiKeyResponseDTO"
+                  "$ref": "#/components/schemas/ProjectApiKeyDetailsResponseDTO"
                 }
               }
             }
@@ -2270,6 +2395,16 @@
               }
             }
           },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Projeto ou configuracao nao encontrados.",
             "content": {
@@ -2391,6 +2526,51 @@
           },
           "phone": {
             "$ref": "#/components/schemas/PhoneDTO"
+          }
+        }
+      },
+      "UserSessionResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponseDTO"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
           }
         }
       },
@@ -2737,6 +2917,71 @@
           }
         }
       },
+      "ProjectApiKeyDetailsResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "keyId": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "secretLastFour": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "USERS_READ",
+                "USERS_WRITE",
+                "AUTH_LOGIN",
+                "AUTH_REGISTER"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "createdByAccountId": {
+            "type": "string"
+          },
+          "createdByAccount": {
+            "$ref": "#/components/schemas/AccountBasicResponseDTO"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CreateProjectDTO": {
         "type": "object",
         "properties": {
@@ -2879,6 +3124,23 @@
             "$ref": "#/components/schemas/PhoneDTO"
           },
           "CPF": {
+            "type": "string"
+          }
+        }
+      },
+      "AccountBasicResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
             "type": "string"
           }
         }
@@ -3103,6 +3365,60 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UserResponseDTO"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageResultUserSessionResponseDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSessionResponseDTO"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageResultProjectApiKeyDetailsResponseDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectApiKeyDetailsResponseDTO"
             }
           },
           "page": {

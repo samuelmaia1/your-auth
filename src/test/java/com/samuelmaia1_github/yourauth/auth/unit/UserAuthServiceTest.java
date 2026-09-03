@@ -80,14 +80,31 @@ class UserAuthServiceTest {
                 refreshTokenService
         );
 
-        UserTokensResponseDTO tokens = service.refreshUserSession("current-refresh-token");
+        UserTokensResponseDTO tokens = service.refreshUserSession("current-refresh-token", PROJECT_ID);
 
         assertThat(refreshTokenService.refreshedRawToken).isEqualTo("current-refresh-token");
+        assertThat(refreshTokenService.refreshedProjectId).isEqualTo(PROJECT_ID);
         assertThat(tokens.accessToken().raw()).isEqualTo("access-token");
         assertThat(tokens.accessToken().duration()).isEqualTo(Duration.ofMinutes(20));
         assertThat(tokens.refreshToken().raw()).isEqualTo("new-refresh-token");
         assertThat(sessionRepository.savedSession.getLastUsedAt()).isAfter(previousLastUsedAt);
         assertThat(sessionRepository.session.isRevoked()).isFalse();
+    }
+
+    @Test
+    void shouldLogoutUserSessionUsingAuthenticatedProjectId() {
+        RecordingUserSessionRepository sessionRepository = new RecordingUserSessionRepository(null);
+        StubUserRefreshTokenService refreshTokenService = new StubUserRefreshTokenService();
+        UserAuthService service = service(
+                new StubUserRepository(user()),
+                sessionRepository,
+                refreshTokenService
+        );
+
+        service.logoutUserSession("current-refresh-token", PROJECT_ID);
+
+        assertThat(refreshTokenService.loggedOutRawToken).isEqualTo("current-refresh-token");
+        assertThat(refreshTokenService.loggedOutProjectId).isEqualTo(PROJECT_ID);
     }
 
     private UserAuthService service(
@@ -123,6 +140,9 @@ class UserAuthServiceTest {
         private String createdSessionId;
         private String createdUserAgent;
         private String refreshedRawToken;
+        private String refreshedProjectId;
+        private String loggedOutRawToken;
+        private String loggedOutProjectId;
 
         private StubUserRefreshTokenService() {
             super(null, null, null, null, null);
@@ -139,8 +159,9 @@ class UserAuthServiceTest {
         }
 
         @Override
-        public UserRefreshResponseDTO refresh(String currentRawToken) {
+        public UserRefreshResponseDTO refresh(String currentRawToken, String authenticatedProjectId) {
             refreshedRawToken = currentRawToken;
+            refreshedProjectId = authenticatedProjectId;
 
             return new UserRefreshResponseDTO(
                     PROJECT_ID,
@@ -148,6 +169,12 @@ class UserAuthServiceTest {
                     SESSION_ID,
                     new TokenDTO("new-refresh-token", Duration.ofDays(7))
             );
+        }
+
+        @Override
+        public void logout(String currentRawToken, String authenticatedProjectId) {
+            loggedOutRawToken = currentRawToken;
+            loggedOutProjectId = authenticatedProjectId;
         }
     }
 

@@ -1,36 +1,30 @@
-package com.samuelmaia1_github.yourauth.domain.project.passwordconfig;
+package com.samuelmaia1_github.yourauth.domain.usersession;
 
 import com.samuelmaia1_github.yourauth.domain.project.ProjectRepository;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRepository;
+import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
+import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class PasswordConfigService {
-    private final PasswordConfigRepository repository;
+public class UserSessionService {
+    private final UserSessionDetailsRepository repository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
 
-    public PasswordConfig findByProjectId(String projectId) {
-        return findConfigOrThrow(projectId);
-    }
-
-    public PasswordConfig findByProjectId(String projectId, String accountId) {
+    public PageResult<UserSessionDetails> findAllByProjectId(
+            String projectId,
+            String accountId,
+            Pagination pagination
+    ) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
 
-        return findConfigOrThrow(projectId);
-    }
-
-    private PasswordConfig findConfigOrThrow(String projectId) {
-        return repository
-                .findByProjectId(projectId)
-                .orElseThrow(() -> new ProjectNotFoundException(
-                        "Configuração de senha não encontrada para o projeto: " + projectId
-                ));
+        return repository.findAllByProjectId(projectId, pagination);
     }
 
     private void ensureProjectExists(String projectId) {

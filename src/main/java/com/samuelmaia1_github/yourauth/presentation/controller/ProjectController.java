@@ -142,13 +142,22 @@ public class ProjectController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem acesso ao projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Projeto ou configuracao nao encontrados.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<PasswordConfigDTO> getPasswordConfigById(@PathVariable String id) {
-        PasswordConfig config = passwordConfigService.findByProjectId(id);
+    public ResponseEntity<PasswordConfigDTO> getPasswordConfigById(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
+            @PathVariable String id
+    ) {
+        PasswordConfig config = passwordConfigService.findByProjectId(id, authenticatedAccount.id());
 
         return ResponseEntity
                 .ok(PasswordConfigPresentationMapper.toDto(config));

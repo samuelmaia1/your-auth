@@ -1,5 +1,8 @@
 package com.samuelmaia1_github.yourauth.domain.projectapikey;
 
+import com.samuelmaia1_github.yourauth.domain.account.Account;
+import com.samuelmaia1_github.yourauth.domain.account.AccountRepository;
+import com.samuelmaia1_github.yourauth.domain.account.exceptions.AccountNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectRepository;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFoundException;
@@ -28,6 +31,7 @@ public class ProjectApiKeyService {
     private final ProjectApiKeyRepository repository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final AccountRepository accountRepository;
     private final ProjectApiKeyGenerator generator;
     private final ProjectApiKeyHasher hasher;
 
@@ -57,18 +61,32 @@ public class ProjectApiKeyService {
         );
     }
 
-    public PageResult<ProjectApiKey> findAllByProjectId(String projectId, String accountId, Pagination pagination) {
+    public PageResult<ProjectApiKeyDetails> findAllByProjectId(
+            String projectId,
+            String accountId,
+            Pagination pagination
+    ) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
 
-        return repository.findAllByProjectId(projectId, pagination);
+        PageResult<ProjectApiKey> apiKeys = repository.findAllByProjectId(projectId, pagination);
+
+        return new PageResult<>(
+                apiKeys.content().stream()
+                        .map(this::toDetails)
+                        .toList(),
+                apiKeys.page(),
+                apiKeys.size(),
+                apiKeys.totalElements(),
+                apiKeys.totalPages()
+        );
     }
 
-    public ProjectApiKey findById(String projectId, String apiKeyId, String accountId) {
+    public ProjectApiKeyDetails findById(String projectId, String apiKeyId, String accountId) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
 
-        return findApiKeyOrThrow(projectId, apiKeyId);
+        return toDetails(findApiKeyOrThrow(projectId, apiKeyId));
     }
 
     @Transactional
@@ -101,6 +119,14 @@ public class ProjectApiKeyService {
         return repository
                 .findByProjectIdAndId(projectId, apiKeyId)
                 .orElseThrow(ProjectApiKeyNotFoundException::new);
+    }
+
+    private ProjectApiKeyDetails toDetails(ProjectApiKey apiKey) {
+        Account createdByAccount = accountRepository
+                .findById(apiKey.getCreatedByAccountId())
+                .orElseThrow(AccountNotFoundException::new);
+
+        return new ProjectApiKeyDetails(apiKey, createdByAccount);
     }
 
     private void ensureCanCreate(ProjectApiKey apiKey) {

@@ -2,6 +2,7 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedProjectApiKey;
 import com.samuelmaia1_github.yourauth.domain.auth.UserAuthService;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.exceptions.InvalidProjectApiKeyCredentialsException;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.TokenDTO;
@@ -189,8 +190,11 @@ public class UserController {
     @PostMapping("/refresh")
     @Operation(
             summary = "Renova a sessao web de um usuario final",
-            description = "Usa o cookie refresh_token para gerar novos tokens e redefinir cookies HTTP-only.",
-            security = @SecurityRequirement(name = "refreshTokenCookie")
+            description = "Usa a API key do projeto e o cookie refresh_token para gerar novos tokens e redefinir cookies HTTP-only.",
+            security = {
+                    @SecurityRequirement(name = "projectApiKey"),
+                    @SecurityRequirement(name = "refreshTokenCookie")
+            }
     )
     @ApiResponses({
             @ApiResponse(
@@ -210,7 +214,12 @@ public class UserController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Refresh token invalido, expirado ou reutilizado.",
+                    description = "API key ausente ou invalida, ou refresh token invalido, expirado ou reutilizado.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "API key sem permissao para gerenciar a sessao deste projeto.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -225,6 +234,8 @@ public class UserController {
             )
     })
     public ResponseEntity<Void> refresh(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedProjectApiKey authenticatedApiKey,
             @Parameter(
                     description = "Refresh token HTTP-only recebido no login do usuario final.",
                     in = ParameterIn.COOKIE,
@@ -232,7 +243,10 @@ public class UserController {
             )
             @CookieValue("refresh_token") String refreshToken
     ) {
-        UserTokensResponseDTO tokens = userAuthService.refreshUserSession(refreshToken);
+        UserTokensResponseDTO tokens = userAuthService.refreshUserSession(
+                refreshToken,
+                requireProjectApiKey(authenticatedApiKey).projectId()
+        );
 
         ResponseCookie refreshCookie = buildRefreshCookie(tokens.refreshToken());
         ResponseCookie accessCookie = buildAccessCookie(tokens.accessToken());
@@ -247,8 +261,11 @@ public class UserController {
     @PostMapping("/logout")
     @Operation(
             summary = "Encerra a sessao web de um usuario final",
-            description = "Revoga a sessao associada ao refresh token e limpa os cookies da sessao.",
-            security = @SecurityRequirement(name = "refreshTokenCookie")
+            description = "Usa a API key do projeto e o cookie refresh_token para revogar a sessao e limpar os cookies.",
+            security = {
+                    @SecurityRequirement(name = "projectApiKey"),
+                    @SecurityRequirement(name = "refreshTokenCookie")
+            }
     )
     @ApiResponses({
             @ApiResponse(
@@ -268,11 +285,18 @@ public class UserController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Refresh token invalido, expirado ou reutilizado.",
+                    description = "API key ausente ou invalida, ou refresh token invalido, expirado ou reutilizado.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "API key sem permissao para gerenciar a sessao deste projeto.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
     public ResponseEntity<Void> logout(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedProjectApiKey authenticatedApiKey,
             @Parameter(
                     description = "Refresh token HTTP-only recebido no login do usuario final.",
                     in = ParameterIn.COOKIE,
@@ -280,13 +304,21 @@ public class UserController {
             )
             @CookieValue("refresh_token") String refreshToken
     ) {
-        userAuthService.logoutUserSession(refreshToken);
+        userAuthService.logoutUserSession(refreshToken, requireProjectApiKey(authenticatedApiKey).projectId());
 
         return ResponseEntity
                 .noContent()
                 .header(HttpHeaders.SET_COOKIE, clearCookie("refresh_token").toString())
                 .header(HttpHeaders.SET_COOKIE, clearCookie("access-token").toString())
                 .build();
+    }
+
+    private AuthenticatedProjectApiKey requireProjectApiKey(AuthenticatedProjectApiKey authenticatedApiKey) {
+        if (authenticatedApiKey == null) {
+            throw new InvalidProjectApiKeyCredentialsException("API key não informada.");
+        }
+
+        return authenticatedApiKey;
     }
 
     private ResponseCookie buildRefreshCookie(TokenDTO refreshToken) {
