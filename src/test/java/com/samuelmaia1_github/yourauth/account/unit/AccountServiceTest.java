@@ -5,6 +5,8 @@ import com.samuelmaia1_github.yourauth.domain.account.AccountPolicy;
 import com.samuelmaia1_github.yourauth.domain.account.AccountRepository;
 import com.samuelmaia1_github.yourauth.domain.account.AccountService;
 import com.samuelmaia1_github.yourauth.domain.account.exceptions.AccountNotFoundException;
+import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscription;
+import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscriptionService;
 import com.samuelmaia1_github.yourauth.domain.valueobjects.CPF;
 import com.samuelmaia1_github.yourauth.infra.interfaces.IPasswordEncoder;
 import org.junit.jupiter.api.Test;
@@ -18,19 +20,22 @@ public class AccountServiceTest {
     @Test
     void shouldCreateAccount() {
         Account account = Account.builder()
+                .id("account-id")
                 .email("email@email.com")
                 .password("raw-password")
                 .build();
         RecordingAccountRepository repository = new RecordingAccountRepository();
         RecordingAccountPolicy policy = new RecordingAccountPolicy();
         StubPasswordEncoder encoder = new StubPasswordEncoder();
-        AccountService service = new AccountService(repository, policy, encoder);
+        RecordingAccountSubscriptionService subscriptionService = new RecordingAccountSubscriptionService();
+        AccountService service = new AccountService(repository, policy, encoder, subscriptionService);
 
         Account createdAccount = service.create(account);
 
         assertThat(policy.checkedAccount).isSameAs(account);
         assertThat(encoder.rawPassword).isEqualTo("raw-password");
         assertThat(repository.savedAccount).isSameAs(account);
+        assertThat(subscriptionService.accountId).isEqualTo("account-id");
         assertThat(createdAccount).isSameAs(account);
         assertThat(createdAccount.getPassword()).isEqualTo("encoded-password");
     }
@@ -43,7 +48,12 @@ public class AccountServiceTest {
                 .build();
         RecordingAccountRepository repository = new RecordingAccountRepository();
         repository.accountById = Optional.of(account);
-        AccountService service = new AccountService(repository, new RecordingAccountPolicy(), new StubPasswordEncoder());
+        AccountService service = new AccountService(
+                repository,
+                new RecordingAccountPolicy(),
+                new StubPasswordEncoder(),
+                new RecordingAccountSubscriptionService()
+        );
 
         Account foundAccount = service.findByIdOrEmail("account-id", "email@email.com");
 
@@ -60,7 +70,12 @@ public class AccountServiceTest {
                 .build();
         RecordingAccountRepository repository = new RecordingAccountRepository();
         repository.accountByEmail = Optional.of(account);
-        AccountService service = new AccountService(repository, new RecordingAccountPolicy(), new StubPasswordEncoder());
+        AccountService service = new AccountService(
+                repository,
+                new RecordingAccountPolicy(),
+                new StubPasswordEncoder(),
+                new RecordingAccountSubscriptionService()
+        );
 
         Account foundAccount = service.findByIdOrEmail("missing-id", "email@email.com");
 
@@ -72,7 +87,12 @@ public class AccountServiceTest {
     @Test
     void shouldThrowWhenAuthenticatedAccountIsNotFound() {
         RecordingAccountRepository repository = new RecordingAccountRepository();
-        AccountService service = new AccountService(repository, new RecordingAccountPolicy(), new StubPasswordEncoder());
+        AccountService service = new AccountService(
+                repository,
+                new RecordingAccountPolicy(),
+                new StubPasswordEncoder(),
+                new RecordingAccountSubscriptionService()
+        );
 
         assertThatThrownBy(() -> service.findByIdOrEmail("missing-id", "missing@email.com"))
                 .isInstanceOf(AccountNotFoundException.class)
@@ -147,6 +167,20 @@ public class AccountServiceTest {
         @Override
         public Boolean matches(String raw, String hash) {
             return false;
+        }
+    }
+
+    private static class RecordingAccountSubscriptionService extends AccountSubscriptionService {
+        private String accountId;
+
+        private RecordingAccountSubscriptionService() {
+            super(null, null, null);
+        }
+
+        @Override
+        public AccountSubscription createFreeSubscription(String accountId) {
+            this.accountId = accountId;
+            return null;
         }
     }
 }
