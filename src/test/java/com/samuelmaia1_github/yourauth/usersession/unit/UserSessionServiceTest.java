@@ -13,9 +13,12 @@ import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSession;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionDetails;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionDetailsRepository;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionFilter;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionService;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionStatus;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class UserSessionServiceTest {
     private static final String PROJECT_ID = "project-id";
     private static final String ACCOUNT_ID = "account-id";
+    private static final UserSessionFilter EMPTY_FILTER = new UserSessionFilter(null, null, null, null);
 
     @Test
     void shouldListSessionsWhenAuthenticatedAccountIsProjectMember() {
@@ -38,7 +42,12 @@ class UserSessionServiceTest {
         );
         Pagination pagination = new Pagination(1, 10);
 
-        PageResult<UserSessionDetails> sessions = service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, pagination);
+        PageResult<UserSessionDetails> sessions = service.findAllByProjectId(
+                PROJECT_ID,
+                ACCOUNT_ID,
+                pagination,
+                EMPTY_FILTER
+        );
 
         assertThat(sessions.content()).hasSize(1);
         assertThat(sessions.page()).isEqualTo(1);
@@ -46,8 +55,44 @@ class UserSessionServiceTest {
         assertThat(sessions.totalElements()).isEqualTo(1);
         assertThat(sessionsRepository.projectId).isEqualTo(PROJECT_ID);
         assertThat(sessionsRepository.pagination).isSameAs(pagination);
+        assertThat(sessionsRepository.filter).isSameAs(EMPTY_FILTER);
         assertThat(memberRepository.projectId).isEqualTo(PROJECT_ID);
         assertThat(memberRepository.accountId).isEqualTo(ACCOUNT_ID);
+    }
+
+    @Test
+    void shouldListSessionsWithFilters() {
+        RecordingUserSessionDetailsRepository sessionsRepository = new RecordingUserSessionDetailsRepository();
+        UserSessionService service = new UserSessionService(
+                sessionsRepository,
+                new StubProjectRepository(true),
+                new RecordingProjectMemberRepository(true)
+        );
+        Pagination pagination = new Pagination(0, 20);
+        UserSessionFilter filter = new UserSessionFilter(
+                UserSessionStatus.ACTIVE,
+                Instant.parse("2026-01-01T00:00:00Z"),
+                Instant.parse("2026-01-31T23:59:59Z"),
+                " user@email.com "
+        );
+
+        service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, pagination, filter);
+
+        assertThat(sessionsRepository.pagination).isSameAs(pagination);
+        assertThat(sessionsRepository.filter).isSameAs(filter);
+        assertThat(sessionsRepository.filter.userEmail()).isEqualTo("user@email.com");
+    }
+
+    @Test
+    void shouldRejectInvalidLastUsedAtRange() {
+        assertThatThrownBy(() -> new UserSessionFilter(
+                null,
+                Instant.parse("2026-02-01T00:00:00Z"),
+                Instant.parse("2026-01-01T00:00:00Z"),
+                null
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A data inicial do último uso não pode ser posterior à data final.");
     }
 
     @Test
@@ -59,7 +104,7 @@ class UserSessionServiceTest {
                 new RecordingProjectMemberRepository(false)
         );
 
-        assertThatThrownBy(() -> service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, new Pagination(0, 20)))
+        assertThatThrownBy(() -> service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, new Pagination(0, 20), EMPTY_FILTER))
                 .isInstanceOf(ProjectAccessDeniedException.class)
                 .hasMessage("A conta autenticada não tem permissão para acessar este projeto.");
 
@@ -76,7 +121,7 @@ class UserSessionServiceTest {
                 memberRepository
         );
 
-        assertThatThrownBy(() -> service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, new Pagination(0, 20)))
+        assertThatThrownBy(() -> service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, new Pagination(0, 20), EMPTY_FILTER))
                 .isInstanceOf(ProjectNotFoundException.class)
                 .hasMessage("Projeto não encontrado: " + PROJECT_ID);
 
@@ -87,11 +132,17 @@ class UserSessionServiceTest {
     private static class RecordingUserSessionDetailsRepository implements UserSessionDetailsRepository {
         private String projectId;
         private Pagination pagination;
+        private UserSessionFilter filter;
 
         @Override
-        public PageResult<UserSessionDetails> findAllByProjectId(String projectId, Pagination pagination) {
+        public PageResult<UserSessionDetails> findAllByProjectId(
+                String projectId,
+                Pagination pagination,
+                UserSessionFilter filter
+        ) {
             this.projectId = projectId;
             this.pagination = pagination;
+            this.filter = filter;
 
             return new PageResult<>(
                     List.of(new UserSessionDetails(

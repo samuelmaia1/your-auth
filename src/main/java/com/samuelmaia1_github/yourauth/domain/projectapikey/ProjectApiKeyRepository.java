@@ -16,7 +16,7 @@ public interface ProjectApiKeyRepository {
 
     Optional<ProjectApiKey> findByPrefix(String prefix);
 
-    PageResult<ProjectApiKey> findAllByProjectId(String projectId, Pagination pagination);
+    PageResult<ProjectApiKey> findAllByProjectId(String projectId, Pagination pagination, ProjectApiKeyFilter filter);
 
     void deleteById(String id);
 }

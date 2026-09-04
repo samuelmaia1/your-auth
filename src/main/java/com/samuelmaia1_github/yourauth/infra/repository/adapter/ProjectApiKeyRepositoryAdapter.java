@@ -1,6 +1,7 @@
 package com.samuelmaia1_github.yourauth.infra.repository.adapter;
 
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKey;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyFilter;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyRepository;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
@@ -45,9 +46,14 @@ public class ProjectApiKeyRepositoryAdapter implements ProjectApiKeyRepository {
     }
 
     @Override
-    public PageResult<ProjectApiKey> findAllByProjectId(String projectId, Pagination pagination) {
+    public PageResult<ProjectApiKey> findAllByProjectId(
+            String projectId,
+            Pagination pagination,
+            ProjectApiKeyFilter filter
+    ) {
         Page<ProjectApiKey> page = repository.findAllByProjectId(
                 projectId,
+                filter.createdBy(),
                 pageRequest(pagination)
         ).map(ProjectApiKeyMapper::toDomain);
 

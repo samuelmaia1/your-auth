@@ -18,7 +18,7 @@ public interface UserRepository {
 
     boolean existsByProjectIdAndEmailIgnoreCaseAndIdNot(String projectId, String email, String id);
 
-    PageResult<User> findAllByProjectId(String projectId, Pagination pagination);
+    PageResult<User> findAllByProjectId(String projectId, Pagination pagination, UserFilter filter);
 
     void deleteById(String id);
 }

@@ -9,6 +9,7 @@ import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshTokenServi
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.User;
+import com.samuelmaia1_github.yourauth.domain.user.UserFilter;
 import com.samuelmaia1_github.yourauth.domain.user.UserRepository;
 import com.samuelmaia1_github.yourauth.domain.user.UserStatus;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSession;
@@ -266,7 +267,7 @@ class UserAuthServiceTest {
         }
 
         @Override
-        public PageResult<User> findAllByProjectId(String projectId, Pagination pagination) {
+        public PageResult<User> findAllByProjectId(String projectId, Pagination pagination, UserFilter filter) {
             return new PageResult<>(List.of(), pagination.page(), pagination.size(), 0, 0);
         }
 

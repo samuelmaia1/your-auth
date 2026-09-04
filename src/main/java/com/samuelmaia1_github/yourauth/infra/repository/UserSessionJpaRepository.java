@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface UserSessionJpaRepository extends JpaRepository<UserSessionEntity, String> {
@@ -19,15 +20,33 @@ public interface UserSessionJpaRepository extends JpaRepository<UserSessionEntit
                         on sessionUser.projectId = userSession.projectId
                         and sessionUser.id = userSession.userId
                     where userSession.projectId = :projectId
+                      and (:activeOnly = false or userSession.revokedAt is null)
+                      and (:inactiveOnly = false or userSession.revokedAt is not null)
+                      and (:lastUsedAtFrom is null or userSession.lastUsedAt >= :lastUsedAtFrom)
+                      and (:lastUsedAtTo is null or userSession.lastUsedAt <= :lastUsedAtTo)
+                      and (:userEmail is null or lower(sessionUser.email) like lower(concat('%', :userEmail, '%')))
                     """,
             countQuery = """
                     select count(userSession)
                     from UserSessionEntity userSession
+                    join UserEntity sessionUser
+                        on sessionUser.projectId = userSession.projectId
+                        and sessionUser.id = userSession.userId
                     where userSession.projectId = :projectId
+                      and (:activeOnly = false or userSession.revokedAt is null)
+                      and (:inactiveOnly = false or userSession.revokedAt is not null)
+                      and (:lastUsedAtFrom is null or userSession.lastUsedAt >= :lastUsedAtFrom)
+                      and (:lastUsedAtTo is null or userSession.lastUsedAt <= :lastUsedAtTo)
+                      and (:userEmail is null or lower(sessionUser.email) like lower(concat('%', :userEmail, '%')))
                     """
     )
     Page<UserSessionDetailsProjection> findAllDetailsByProjectId(
             @Param("projectId") String projectId,
+            @Param("activeOnly") boolean activeOnly,
+            @Param("inactiveOnly") boolean inactiveOnly,
+            @Param("lastUsedAtFrom") Instant lastUsedAtFrom,
+            @Param("lastUsedAtTo") Instant lastUsedAtTo,
+            @Param("userEmail") String userEmail,
             Pageable pageable
     );
 

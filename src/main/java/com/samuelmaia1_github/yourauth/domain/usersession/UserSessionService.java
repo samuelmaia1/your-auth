@@ -19,12 +19,13 @@ public class UserSessionService {
     public PageResult<UserSessionDetails> findAllByProjectId(
             String projectId,
             String accountId,
-            Pagination pagination
+            Pagination pagination,
+            UserSessionFilter filter
     ) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
 
-        return repository.findAllByProjectId(projectId, pagination);
+        return repository.findAllByProjectId(projectId, pagination, filter);
     }
 
     private void ensureProjectExists(String projectId) {

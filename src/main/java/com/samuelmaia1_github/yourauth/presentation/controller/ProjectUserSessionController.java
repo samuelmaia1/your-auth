@@ -4,7 +4,9 @@ import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionDetails;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionFilter;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionService;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionStatus;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.dto.usersession.UserSessionResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.UserSessionPresentationMapper;
@@ -17,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +27,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
 
 @RequiredArgsConstructor
 @RestController
@@ -40,7 +45,7 @@ public class ProjectUserSessionController {
             @ApiResponse(responseCode = "200", description = "Sessoes encontradas."),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Parametros de paginacao invalidos.",
+                    description = "Parametros de paginacao ou filtros invalidos.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -64,12 +69,17 @@ public class ProjectUserSessionController {
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) UserSessionStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastUsedAtFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastUsedAtTo,
+            @RequestParam(required = false) String userEmail
     ) {
         PageResult<UserSessionDetails> sessions = service.findAllByProjectId(
                 projectId,
                 authenticatedAccount.id(),
-                new Pagination(page, size)
+                new Pagination(page, size),
+                new UserSessionFilter(status, lastUsedAtFrom, lastUsedAtTo, userEmail)
         );
 
         return ResponseEntity.ok(UserSessionPresentationMapper.toResponseDTO(sessions));

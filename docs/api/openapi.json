@@ -1070,6 +1070,29 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Filtra por trecho do email do usuario.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtra pelo status do usuario.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "DISABLED",
+                "BLOCKED"
+              ]
+            }
           }
         ],
         "responses": {
@@ -1084,7 +1107,7 @@
             }
           },
           "400": {
-            "description": "Parametros de paginacao invalidos.",
+            "description": "Parametros de paginacao ou filtros invalidos.",
             "content": {
               "*/*": {
                 "schema": {
@@ -1266,6 +1289,48 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtra pelo status da sessao.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "lastUsedAtFrom",
+            "in": "query",
+            "description": "Filtra sessoes com ultimo uso a partir desta data.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "lastUsedAtTo",
+            "in": "query",
+            "description": "Filtra sessoes com ultimo uso ate esta data.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "userEmail",
+            "in": "query",
+            "description": "Filtra por trecho do email do usuario da sessao.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1280,7 +1345,7 @@
             }
           },
           "400": {
-            "description": "Parametros de paginacao invalidos.",
+            "description": "Parametros de paginacao ou filtros invalidos.",
             "content": {
               "*/*": {
                 "schema": {
@@ -1365,6 +1430,15 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "createdBy",
+            "in": "query",
+            "description": "Filtra por trecho do email ou nome completo da conta criadora.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1379,7 +1453,7 @@
             }
           },
           "400": {
-            "description": "Parametros de paginacao invalidos.",
+            "description": "Parametros de paginacao ou filtros invalidos.",
             "content": {
               "*/*": {
                 "schema": {

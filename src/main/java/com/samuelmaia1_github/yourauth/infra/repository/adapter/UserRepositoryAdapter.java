@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.infra.repository.adapter;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.User;
+import com.samuelmaia1_github.yourauth.domain.user.UserFilter;
 import com.samuelmaia1_github.yourauth.domain.user.UserRepository;
 import com.samuelmaia1_github.yourauth.infra.mappers.UserMapper;
 import com.samuelmaia1_github.yourauth.infra.repository.UserJpaRepository;
@@ -50,9 +51,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public PageResult<User> findAllByProjectId(String projectId, Pagination pagination) {
+    public PageResult<User> findAllByProjectId(String projectId, Pagination pagination, UserFilter filter) {
         Page<User> page = repository.findAllByProjectId(
                 projectId,
+                filter.email(),
+                filter.status(),
                 pageRequest(pagination)
         ).map(UserMapper::toDomain);
 

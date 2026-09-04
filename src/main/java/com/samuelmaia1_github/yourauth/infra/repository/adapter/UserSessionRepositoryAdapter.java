@@ -5,6 +5,8 @@ import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSession;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionDetails;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionDetailsRepository;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionFilter;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionStatus;
 import com.samuelmaia1_github.yourauth.infra.mappers.UserMapper;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionRepository;
 import com.samuelmaia1_github.yourauth.infra.repository.UserSessionDetailsProjection;
@@ -35,9 +37,18 @@ public class UserSessionRepositoryAdapter implements UserSessionRepository, User
     }
 
     @Override
-    public PageResult<UserSessionDetails> findAllByProjectId(String projectId, Pagination pagination) {
+    public PageResult<UserSessionDetails> findAllByProjectId(
+            String projectId,
+            Pagination pagination,
+            UserSessionFilter filter
+    ) {
         Page<UserSessionDetails> page = repository.findAllDetailsByProjectId(
                 projectId,
+                UserSessionStatus.ACTIVE.equals(filter.status()),
+                UserSessionStatus.INACTIVE.equals(filter.status()),
+                filter.lastUsedAtFrom(),
+                filter.lastUsedAtTo(),
+                filter.userEmail(),
                 pageRequest(pagination)
         ).map(this::toDetails);
 

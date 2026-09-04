@@ -1,13 +1,14 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
-import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedProjectApiKey;
 import com.samuelmaia1_github.yourauth.domain.auth.UserAuthService;
 import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshTokenService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.User;
+import com.samuelmaia1_github.yourauth.domain.user.UserFilter;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
+import com.samuelmaia1_github.yourauth.domain.user.UserStatus;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UpdateUserDTO;
@@ -36,8 +37,6 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "accessTokenCookie")
 public class ProjectUserController {
     private final UserService userService;
-    private final UserAuthService userAuthService;
-    private final UserRefreshTokenService refreshTokenService;
 
     @PostMapping
     @Operation(summary = "Cria um usuario final em um projeto")
@@ -93,7 +92,7 @@ public class ProjectUserController {
             @ApiResponse(responseCode = "200", description = "Usuarios encontrados."),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Parametros de paginacao invalidos.",
+                    description = "Parametros de paginacao ou filtros invalidos.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -117,12 +116,15 @@ public class ProjectUserController {
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) UserStatus status
     ) {
         PageResult<User> users = userService.findAllByProjectId(
                 projectId,
                 authenticatedAccount.id(),
-                new Pagination(page, size)
+                new Pagination(page, size),
+                new UserFilter(email, status)
         );
 
         return ResponseEntity.ok(UserPresentationMapper.toResponseDTO(users));

@@ -68,11 +68,16 @@ public class UserService {
         }
     }
 
-    public PageResult<User> findAllByProjectId(String projectId, String accountId, Pagination pagination) {
+    public PageResult<User> findAllByProjectId(
+            String projectId,
+            String accountId,
+            Pagination pagination,
+            UserFilter filter
+    ) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
 
-        return userRepository.findAllByProjectId(projectId, pagination);
+        return userRepository.findAllByProjectId(projectId, pagination, filter);
     }
 
     public User findById(String projectId, String userId, String accountId) {

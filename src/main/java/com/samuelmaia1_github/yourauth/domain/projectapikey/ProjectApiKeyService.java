@@ -64,12 +64,13 @@ public class ProjectApiKeyService {
     public PageResult<ProjectApiKeyDetails> findAllByProjectId(
             String projectId,
             String accountId,
-            Pagination pagination
+            Pagination pagination,
+            ProjectApiKeyFilter filter
     ) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
 
-        PageResult<ProjectApiKey> apiKeys = repository.findAllByProjectId(projectId, pagination);
+        PageResult<ProjectApiKey> apiKeys = repository.findAllByProjectId(projectId, pagination, filter);
 
         return new PageResult<>(
                 apiKeys.content().stream()

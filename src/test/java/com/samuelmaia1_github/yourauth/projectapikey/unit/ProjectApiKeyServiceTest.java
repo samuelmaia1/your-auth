@@ -7,6 +7,7 @@ import com.samuelmaia1_github.yourauth.domain.project.ProjectRepository;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKey;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyDetails;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyFilter;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyRepository;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyService;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMember;
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ProjectApiKeyServiceTest {
     private static final String PROJECT_ID = "project-id";
     private static final String ACCOUNT_ID = "account-id";
+    private static final ProjectApiKeyFilter EMPTY_FILTER = new ProjectApiKeyFilter(null);
 
     @Test
     void shouldListApiKeysWithCreatedByAccountData() {
@@ -42,7 +44,12 @@ class ProjectApiKeyServiceTest {
         );
         Pagination pagination = new Pagination(0, 20);
 
-        PageResult<ProjectApiKeyDetails> apiKeys = service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, pagination);
+        PageResult<ProjectApiKeyDetails> apiKeys = service.findAllByProjectId(
+                PROJECT_ID,
+                ACCOUNT_ID,
+                pagination,
+                EMPTY_FILTER
+        );
 
         assertThat(apiKeys.content()).hasSize(1);
         assertThat(apiKeys.content().getFirst().apiKey().getId()).isEqualTo("api-key-id");
@@ -50,6 +57,28 @@ class ProjectApiKeyServiceTest {
         assertThat(accountRepository.accountId).isEqualTo(ACCOUNT_ID);
         assertThat(apiKeyRepository.projectId).isEqualTo(PROJECT_ID);
         assertThat(apiKeyRepository.pagination).isSameAs(pagination);
+        assertThat(apiKeyRepository.filter).isSameAs(EMPTY_FILTER);
+    }
+
+    @Test
+    void shouldListApiKeysWithCreatedByFilter() {
+        RecordingProjectApiKeyRepository apiKeyRepository = new RecordingProjectApiKeyRepository();
+        ProjectApiKeyService service = new ProjectApiKeyService(
+                apiKeyRepository,
+                new StubProjectRepository(true),
+                new RecordingProjectMemberRepository(true),
+                new RecordingAccountRepository(),
+                null,
+                null
+        );
+        Pagination pagination = new Pagination(0, 20);
+        ProjectApiKeyFilter filter = new ProjectApiKeyFilter(" owner@email.com ");
+
+        service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, pagination, filter);
+
+        assertThat(apiKeyRepository.pagination).isSameAs(pagination);
+        assertThat(apiKeyRepository.filter).isSameAs(filter);
+        assertThat(apiKeyRepository.filter.createdBy()).isEqualTo("owner@email.com");
     }
 
     @Test
@@ -64,7 +93,7 @@ class ProjectApiKeyServiceTest {
                 null
         );
 
-        assertThatThrownBy(() -> service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, new Pagination(0, 20)))
+        assertThatThrownBy(() -> service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, new Pagination(0, 20), EMPTY_FILTER))
                 .isInstanceOf(ProjectAccessDeniedException.class)
                 .hasMessage("A conta autenticada não tem permissão para acessar este projeto.");
 
@@ -74,6 +103,7 @@ class ProjectApiKeyServiceTest {
     private static class RecordingProjectApiKeyRepository implements ProjectApiKeyRepository {
         private String projectId;
         private Pagination pagination;
+        private ProjectApiKeyFilter filter;
 
         @Override
         public ProjectApiKey save(ProjectApiKey apiKey) {
@@ -101,9 +131,14 @@ class ProjectApiKeyServiceTest {
         }
 
         @Override
-        public PageResult<ProjectApiKey> findAllByProjectId(String projectId, Pagination pagination) {
+        public PageResult<ProjectApiKey> findAllByProjectId(
+                String projectId,
+                Pagination pagination,
+                ProjectApiKeyFilter filter
+        ) {
             this.projectId = projectId;
             this.pagination = pagination;
+            this.filter = filter;
 
             return new PageResult<>(
                     List.of(ProjectApiKey.builder()

@@ -4,6 +4,7 @@ import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.CreatedProjectApiKey;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKey;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyDetails;
+import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyFilter;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.ProjectApiKeyService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
@@ -96,7 +97,7 @@ public class ProjectApiKeyController {
             @ApiResponse(responseCode = "200", description = "API keys encontradas."),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Parametros de paginacao invalidos.",
+                    description = "Parametros de paginacao ou filtros invalidos.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -120,12 +121,14 @@ public class ProjectApiKeyController {
             @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
             @PathVariable String projectId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String createdBy
     ) {
         PageResult<ProjectApiKeyDetails> apiKeys = service.findAllByProjectId(
                 projectId,
                 authenticatedAccount.id(),
-                new Pagination(page, size)
+                new Pagination(page, size),
+                new ProjectApiKeyFilter(createdBy)
         );
 
         return ResponseEntity.ok(ProjectApiKeyPresentationMapper.toDetailsResponseDTO(apiKeys));
