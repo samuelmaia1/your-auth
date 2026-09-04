@@ -66,6 +66,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/h2-console/**").permitAll()
                             .requestMatchers("/error").permitAll()
                             .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/plans").permitAll()
                             .requestMatchers(HttpMethod.POST, "/accounts/create").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()

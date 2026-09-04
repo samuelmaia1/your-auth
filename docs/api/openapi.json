@@ -37,6 +37,10 @@
       "description": "Cadastro de contas proprietarias do Your Auth."
     },
     {
+      "name": "Plans",
+      "description": "Catalogo de planos disponiveis para contas proprietarias."
+    },
+    {
       "name": "Account Authentication",
       "description": "Login e renovacao de sessao para contas proprietarias."
     },
@@ -46,6 +50,30 @@
     }
   ],
   "paths": {
+    "/plans": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Lista os planos ativos",
+        "operationId": "findAllActive",
+        "responses": {
+          "200": {
+            "description": "Planos ativos encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/projects/{projectId}/users/{userId}": {
       "get": {
         "tags": [
@@ -2215,6 +2243,56 @@
         ]
       }
     },
+    "/accounts/me/subscription": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Busca a assinatura atual da conta autenticada",
+        "description": "Retorna o plano e o estado da assinatura atual da conta proprietaria autenticada.",
+        "operationId": "subscription",
+        "responses": {
+          "200": {
+            "description": "Assinatura atual encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSubscriptionResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria ou token de conta invalido.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta ou assinatura nao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
     "/projects": {
       "get": {
         "tags": [
@@ -3299,6 +3377,151 @@
           "totalActiveSessions": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "PlanResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "FREE",
+              "STARTER",
+              "PRO",
+              "BUSINESS"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanFeatureResponseDTO"
+            }
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanLimitResponseDTO"
+            }
+          }
+        }
+      },
+      "PlanFeatureResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PlanLimitResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "DAILY",
+              "MONTHLY",
+              "YEARLY"
+            ]
+          },
+          "unlimited": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AccountSubscriptionResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponseDTO"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "TRIALING",
+              "PAST_DUE",
+              "SUSPENDED",
+              "CANCELED"
+            ]
+          },
+          "billingCycle": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "MONTHLY",
+              "YEARLY"
+            ]
+          },
+          "currentPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currentPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trialEndsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canceledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
