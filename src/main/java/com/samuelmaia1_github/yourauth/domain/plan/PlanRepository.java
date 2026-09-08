@@ -9,4 +9,6 @@ public interface PlanRepository {
     Optional<Plan> findById(String id);
 
     Optional<Plan> findByCode(PlanCode code);
+
+    List<PlanLimit> saveLimits(String planId, List<PlanLimit> limits);
 }

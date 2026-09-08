@@ -2,6 +2,7 @@ package com.samuelmaia1_github.yourauth.subscription.unit;
 
 import com.samuelmaia1_github.yourauth.domain.plan.Plan;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanCode;
+import com.samuelmaia1_github.yourauth.domain.plan.PlanLimit;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanRepository;
 import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscription;
 import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscriptionEvent;
@@ -134,6 +135,11 @@ class AccountSubscriptionServiceTest {
             return plans.stream()
                     .filter(plan -> plan.getCode() == code)
                     .findFirst();
+        }
+
+        @Override
+        public List<PlanLimit> saveLimits(String planId, List<PlanLimit> limits) {
+            return limits;
         }
 
         private static Plan plan(String id, PlanCode code) {

@@ -68,7 +68,7 @@ public class PlanMapper {
                 .toList();
     }
 
-    private static PlanLimit toLimitDomain(PlanLimitEntity entity) {
+    public static PlanLimit toLimitDomain(PlanLimitEntity entity) {
         return PlanLimit.builder()
                 .id(entity.getId())
                 .planId(entity.getPlanId())

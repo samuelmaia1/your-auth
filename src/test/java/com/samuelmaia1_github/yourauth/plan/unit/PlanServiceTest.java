@@ -2,10 +2,14 @@ package com.samuelmaia1_github.yourauth.plan.unit;
 
 import com.samuelmaia1_github.yourauth.domain.plan.Plan;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanCode;
+import com.samuelmaia1_github.yourauth.domain.plan.PlanLimit;
+import com.samuelmaia1_github.yourauth.domain.plan.PlanLimitCode;
+import com.samuelmaia1_github.yourauth.domain.plan.PlanLimitSettings;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanRepository;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanService;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +31,25 @@ class PlanServiceTest {
                 .containsExactly(PlanCode.FREE, PlanCode.STARTER);
     }
 
+    @Test
+    void shouldUpdatePlanLimits() {
+        RecordingPlanRepository repository = new RecordingPlanRepository(List.of(
+                plan("free", PlanCode.FREE)
+        ));
+        PlanService service = new PlanService(repository);
+
+        Plan plan = service.updateLimits(PlanCode.FREE, new PlanLimitSettings(1L, 100L, 200L));
+
+        assertThat(repository.savedPlanId).isEqualTo("free");
+        assertThat(plan.getLimits())
+                .extracting(PlanLimit::getCode, PlanLimit::getValue)
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple(PlanLimitCode.MAX_PROJECTS.name(), 1L),
+                        org.assertj.core.groups.Tuple.tuple(PlanLimitCode.MAX_USERS_TOTAL.name(), 100L),
+                        org.assertj.core.groups.Tuple.tuple(PlanLimitCode.MAX_ACTIVE_SESSIONS_TOTAL.name(), 200L)
+                );
+    }
+
     private static Plan plan(String id, PlanCode code) {
         return Plan.builder()
                 .id(id)
@@ -39,9 +62,10 @@ class PlanServiceTest {
     private static class RecordingPlanRepository implements PlanRepository {
         private final List<Plan> plans;
         private boolean findAllActiveCalled;
+        private String savedPlanId;
 
         private RecordingPlanRepository(List<Plan> plans) {
-            this.plans = plans;
+            this.plans = new ArrayList<>(plans);
         }
 
         @Override
@@ -62,6 +86,23 @@ class PlanServiceTest {
             return plans.stream()
                     .filter(plan -> plan.getCode() == code)
                     .findFirst();
+        }
+
+        @Override
+        public List<PlanLimit> saveLimits(String planId, List<PlanLimit> limits) {
+            savedPlanId = planId;
+
+            for (int i = 0; i < plans.size(); i++) {
+                Plan plan = plans.get(i);
+
+                if (plan.getId().equals(planId)) {
+                    plans.set(i, plan.toBuilder()
+                            .limits(limits)
+                            .build());
+                }
+            }
+
+            return limits;
         }
     }
 }

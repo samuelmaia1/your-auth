@@ -9,5 +9,7 @@ import java.util.List;
 public interface PlanLimitJpaRepository extends JpaRepository<PlanLimitEntity, String> {
     List<PlanLimitEntity> findAllByPlanId(String planId);
 
+    List<PlanLimitEntity> findAllByPlanIdAndCodeIn(String planId, Collection<String> codes);
+
     List<PlanLimitEntity> findAllByPlanIdIn(Collection<String> planIds);
 }

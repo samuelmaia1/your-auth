@@ -2,6 +2,7 @@ package com.samuelmaia1_github.yourauth.infra.repository.adapter;
 
 import com.samuelmaia1_github.yourauth.domain.plan.Plan;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanCode;
+import com.samuelmaia1_github.yourauth.domain.plan.PlanLimit;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanRepository;
 import com.samuelmaia1_github.yourauth.infra.mappers.PlanMapper;
 import com.samuelmaia1_github.yourauth.infra.repository.PlanFeatureJpaRepository;
@@ -64,11 +65,45 @@ public class PlanRepositoryAdapter implements PlanRepository {
                 .map(this::toPlanWithFeaturesAndLimits);
     }
 
+    @Override
+    public List<PlanLimit> saveLimits(String planId, List<PlanLimit> limits) {
+        List<String> codes = limits.stream()
+                .map(PlanLimit::getCode)
+                .toList();
+        Map<String, PlanLimitEntity> existingLimitsByCode = limitRepository.findAllByPlanIdAndCodeIn(planId, codes)
+                .stream()
+                .collect(Collectors.toMap(PlanLimitEntity::getCode, limit -> limit));
+
+        List<PlanLimitEntity> entities = limits.stream()
+                .map(limit -> toLimitEntity(planId, limit, existingLimitsByCode.get(limit.getCode())))
+                .toList();
+
+        return limitRepository.saveAll(entities)
+                .stream()
+                .map(PlanMapper::toLimitDomain)
+                .toList();
+    }
+
     private Plan toPlanWithFeaturesAndLimits(PlanEntity plan) {
         return PlanMapper.toDomain(
                 plan,
                 featureRepository.findAllByPlanId(plan.getId()),
                 limitRepository.findAllByPlanId(plan.getId())
         );
+    }
+
+    private static PlanLimitEntity toLimitEntity(String planId, PlanLimit limit, PlanLimitEntity currentLimit) {
+        PlanLimitEntity entity = currentLimit == null
+                ? PlanLimitEntity.builder()
+                .planId(planId)
+                .code(limit.getCode())
+                .build()
+                : currentLimit;
+
+        entity.setValue(limit.getValue());
+        entity.setUnit(limit.getUnit());
+        entity.setPeriod(limit.getPeriod());
+
+        return entity;
     }
 }

@@ -4,9 +4,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +27,25 @@ class PlanControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].code").value("FREE"))
                 .andExpect(jsonPath("$[1].code").value("STARTER"))
                 .andExpect(jsonPath("$[2].code").value("PRO"))
-                .andExpect(jsonPath("$[3].code").value("BUSINESS"));
+                .andExpect(jsonPath("$[3].code").value("BUSINESS"))
+                .andExpect(jsonPath("$[0].limits.length()").value(3));
+    }
+
+    @Test
+    void shouldUpdatePlanLimitsWithoutAuthentication() throws Exception {
+        mockMvc.perform(put("/plans/FREE/limits")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "MAX_PROJECTS": 2,
+                                  "MAX_USERS_TOTAL": 250,
+                                  "MAX_ACTIVE_SESSIONS_TOTAL": 500
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("FREE"))
+                .andExpect(jsonPath("$.limits[?(@.code == 'MAX_PROJECTS')].value").value(contains(2)))
+                .andExpect(jsonPath("$.limits[?(@.code == 'MAX_USERS_TOTAL')].value").value(contains(250)))
+                .andExpect(jsonPath("$.limits[?(@.code == 'MAX_ACTIVE_SESSIONS_TOTAL')].value").value(contains(500)));
     }
 }

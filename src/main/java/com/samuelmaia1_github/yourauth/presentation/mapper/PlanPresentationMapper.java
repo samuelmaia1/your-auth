@@ -3,9 +3,11 @@ package com.samuelmaia1_github.yourauth.presentation.mapper;
 import com.samuelmaia1_github.yourauth.domain.plan.Plan;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanFeature;
 import com.samuelmaia1_github.yourauth.domain.plan.PlanLimit;
+import com.samuelmaia1_github.yourauth.domain.plan.PlanLimitSettings;
 import com.samuelmaia1_github.yourauth.presentation.dto.plan.PlanFeatureResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.plan.PlanLimitResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.plan.PlanResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.plan.UpdatePlanLimitsDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,6 +35,14 @@ public class PlanPresentationMapper {
         return plans.stream()
                 .map(PlanPresentationMapper::toResponseDTO)
                 .toList();
+    }
+
+    public static PlanLimitSettings toLimitSettings(UpdatePlanLimitsDTO dto) {
+        return new PlanLimitSettings(
+                dto.maxProjects(),
+                dto.maxUsersTotal(),
+                dto.maxActiveSessionsTotal()
+        );
     }
 
     private static List<PlanFeatureResponseDTO> toFeatureResponseDTO(List<PlanFeature> features) {

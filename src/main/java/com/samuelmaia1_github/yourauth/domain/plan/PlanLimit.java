@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlanLimit {
+    private static final String COUNT_UNIT = "COUNT";
+
     private String id;
     private String planId;
     private String code;
@@ -23,5 +25,19 @@ public class PlanLimit {
 
     public boolean isUnlimited() {
         return value == null;
+    }
+
+    public boolean hasCode(PlanLimitCode code) {
+        return code != null && code.name().equals(this.code);
+    }
+
+    public static PlanLimit countLimit(String planId, PlanLimitCode code, Long value) {
+        return PlanLimit.builder()
+                .planId(planId)
+                .code(code.name())
+                .value(value)
+                .unit(COUNT_UNIT)
+                .period(PlanLimitPeriod.NONE)
+                .build();
     }
 }

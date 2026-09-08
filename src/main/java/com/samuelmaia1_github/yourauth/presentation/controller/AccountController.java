@@ -4,18 +4,22 @@ import com.samuelmaia1_github.yourauth.domain.account.Account;
 import com.samuelmaia1_github.yourauth.domain.account.AccountService;
 import com.samuelmaia1_github.yourauth.domain.account.AccountSummary;
 import com.samuelmaia1_github.yourauth.domain.account.AccountSummaryService;
+import com.samuelmaia1_github.yourauth.domain.account.AccountUsage;
+import com.samuelmaia1_github.yourauth.domain.account.AccountUsageService;
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
 import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscription;
 import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscriptionService;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountSummaryResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountUsageResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.CreateAccountDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.dto.subscription.AccountSubscriptionResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.AccountPresentationMapper;
 import com.samuelmaia1_github.yourauth.presentation.mapper.AccountSubscriptionPresentationMapper;
 import com.samuelmaia1_github.yourauth.presentation.mapper.AccountSummaryPresentationMapper;
+import com.samuelmaia1_github.yourauth.presentation.mapper.AccountUsagePresentationMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,6 +42,7 @@ import org.springframework.web.bind.annotation.*;
 public class AccountController {
     private final AccountService service;
     private final AccountSummaryService summaryService;
+    private final AccountUsageService usageService;
     private final AccountSubscriptionService subscriptionService;
 
     @GetMapping("/me")
@@ -148,6 +153,44 @@ public class AccountController {
         AccountSubscription subscription = subscriptionService.findCurrentByAccountId(account.getId());
 
         return ResponseEntity.ok(AccountSubscriptionPresentationMapper.toResponseDTO(subscription));
+    }
+
+    @GetMapping("/me/usage")
+    @Operation(
+            summary = "Busca o uso e os limites da conta autenticada",
+            description = "Retorna o uso agregado dos projetos criados pela conta proprietaria e os limites do plano atual.",
+            security = {
+                    @SecurityRequirement(name = "bearerAuth"),
+                    @SecurityRequirement(name = "accessTokenCookie")
+            }
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Uso e limites da conta autenticada encontrados.",
+                    content = @Content(schema = @Schema(implementation = AccountUsageResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria ou token de conta invalido.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Conta ou assinatura nao encontrada.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<AccountUsageResponseDTO> usage(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount
+    ) {
+        AuthenticatedAccount currentAccount = requireAuthenticatedAccount(authenticatedAccount);
+        Account account = service.findByIdOrEmail(currentAccount.id(), currentAccount.email());
+        AccountUsage usage = usageService.findByOwnerAccountId(account.getId());
+        AccountSubscription subscription = subscriptionService.findCurrentByAccountId(account.getId());
+
+        return ResponseEntity.ok(AccountUsagePresentationMapper.toResponseDTO(usage, subscription));
     }
 
     @PostMapping("/create")

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Builder(toBuilder = true)
 @AllArgsConstructor
@@ -60,5 +61,17 @@ public class Plan {
 
     public List<PlanLimit> getLimits() {
         return limits == null ? List.of() : List.copyOf(limits);
+    }
+
+    public Optional<PlanLimit> findLimit(PlanLimitCode code) {
+        return getLimits().stream()
+                .filter(limit -> limit.hasCode(code))
+                .findFirst();
+    }
+
+    public Long limitValue(PlanLimitCode code) {
+        return findLimit(code)
+                .map(PlanLimit::getValue)
+                .orElse(null);
     }
 }
