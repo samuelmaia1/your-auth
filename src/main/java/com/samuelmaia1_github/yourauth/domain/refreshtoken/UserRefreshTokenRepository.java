@@ -16,5 +16,7 @@ public interface UserRefreshTokenRepository {
 
     void revokeSession(String sessionId);
 
+    void revokeAllByProjectIdAndUserId(String projectId, String userId);
+
     void deleteById(String id);
 }

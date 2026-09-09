@@ -4,5 +4,8 @@ import java.util.Optional;
 
 public interface PasswordConfigRepository {
     PasswordConfig save(PasswordConfig config);
+
     Optional<PasswordConfig> findByProjectId(String projectId);
+
+    void deleteByProjectId(String projectId);
 }

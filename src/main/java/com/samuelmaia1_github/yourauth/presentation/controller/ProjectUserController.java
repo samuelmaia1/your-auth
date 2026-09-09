@@ -1,14 +1,13 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
-import com.samuelmaia1_github.yourauth.domain.auth.UserAuthService;
-import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshTokenService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserFilter;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
 import com.samuelmaia1_github.yourauth.domain.user.UserStatus;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionService;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UpdateUserDTO;
@@ -37,6 +36,7 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "accessTokenCookie")
 public class ProjectUserController {
     private final UserService userService;
+    private final UserSessionService sessionService;
 
     @PostMapping
     @Operation(summary = "Cria um usuario final em um projeto")
@@ -238,5 +238,67 @@ public class ProjectUserController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{userId}/sessions/{sessionId}")
+    @Operation(summary = "Revoga uma sessao de um usuario final")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Sessao revogada."),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem permissao para revogar sessoes neste projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto, usuario ou sessao nao encontrados.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> revokeSession(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
+            @PathVariable String projectId,
+            @PathVariable String userId,
+            @PathVariable String sessionId
+    ) {
+        sessionService.revokeById(projectId, userId, sessionId, authenticatedAccount.id());
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{userId}/sessions")
+    @Operation(summary = "Revoga todas as sessoes de um usuario final")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Sessoes revogadas."),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem permissao para revogar sessoes neste projeto.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto ou usuario nao encontrados.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> revokeAllSessions(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
+            @PathVariable String projectId,
+            @PathVariable String userId
+    ) {
+        sessionService.revokeAllByUserId(projectId, userId, authenticatedAccount.id());
+
+        return ResponseEntity.noContent().build();
+    }
 
 }

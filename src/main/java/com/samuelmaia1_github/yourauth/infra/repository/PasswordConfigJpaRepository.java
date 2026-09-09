@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface PasswordConfigJpaRepository extends JpaRepository<PasswordConfigEntity, String> {
     Optional<PasswordConfigEntity> findByProjectId(String projectId);
+
+    void deleteByProjectId(String projectId);
 }

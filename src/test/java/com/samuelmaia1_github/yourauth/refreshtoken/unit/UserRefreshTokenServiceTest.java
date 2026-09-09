@@ -294,6 +294,13 @@ class UserRefreshTokenServiceTest {
         }
 
         @Override
+        public void revokeAllByProjectIdAndUserId(String projectId, String userId) {
+            findAllByProjectIdAndUserId(projectId, userId).stream()
+                    .filter(token -> !token.isRevoked())
+                    .forEach(UserRefreshToken::revoke);
+        }
+
+        @Override
         public void deleteById(String id) {
             tokens.removeIf(token -> id.equals(token.getId()));
         }
@@ -337,6 +344,10 @@ class UserRefreshTokenServiceTest {
             if (session != null && id.equals(session.getId())) {
                 session.revoke();
             }
+        }
+
+        @Override
+        public void revokeAllByProjectIdAndUserId(String projectId, String userId) {
         }
 
         @Override

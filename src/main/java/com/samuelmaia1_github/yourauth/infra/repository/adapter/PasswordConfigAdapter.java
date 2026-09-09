@@ -25,4 +25,9 @@ public class PasswordConfigAdapter implements PasswordConfigRepository {
     public Optional<PasswordConfig> findByProjectId(String projectId) {
         return repository.findByProjectId(projectId).map(PasswordConfigMapper::toDomain);
     }
+
+    @Override
+    public void deleteByProjectId(String projectId) {
+        repository.deleteByProjectId(projectId);
+    }
 }

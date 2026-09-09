@@ -14,5 +14,7 @@ public interface UserSessionRepository {
 
     void revokeById(String id);
 
+    void revokeAllByProjectIdAndUserId(String projectId, String userId);
+
     long countByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId);
 }

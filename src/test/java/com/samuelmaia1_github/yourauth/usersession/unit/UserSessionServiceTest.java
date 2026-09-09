@@ -7,15 +7,21 @@ import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFound
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMember;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRepository;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRole;
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshToken;
+import com.samuelmaia1_github.yourauth.domain.refreshtoken.UserRefreshTokenRepository;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.User;
+import com.samuelmaia1_github.yourauth.domain.user.UserFilter;
+import com.samuelmaia1_github.yourauth.domain.user.UserRepository;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSession;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionDetails;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionDetailsRepository;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionFilter;
+import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionRepository;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionService;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionStatus;
+import com.samuelmaia1_github.yourauth.domain.usersession.exceptions.UserSessionNotFoundException;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -37,6 +43,9 @@ class UserSessionServiceTest {
         RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
         UserSessionService service = new UserSessionService(
                 sessionsRepository,
+                new RecordingUserSessionRepository(activeSession()),
+                new RecordingUserRefreshTokenRepository(),
+                new StubUserRepository(true),
                 new StubProjectRepository(true),
                 memberRepository
         );
@@ -65,6 +74,9 @@ class UserSessionServiceTest {
         RecordingUserSessionDetailsRepository sessionsRepository = new RecordingUserSessionDetailsRepository();
         UserSessionService service = new UserSessionService(
                 sessionsRepository,
+                new RecordingUserSessionRepository(activeSession()),
+                new RecordingUserRefreshTokenRepository(),
+                new StubUserRepository(true),
                 new StubProjectRepository(true),
                 new RecordingProjectMemberRepository(true)
         );
@@ -100,6 +112,9 @@ class UserSessionServiceTest {
         RecordingUserSessionDetailsRepository sessionsRepository = new RecordingUserSessionDetailsRepository();
         UserSessionService service = new UserSessionService(
                 sessionsRepository,
+                new RecordingUserSessionRepository(activeSession()),
+                new RecordingUserRefreshTokenRepository(),
+                new StubUserRepository(true),
                 new StubProjectRepository(true),
                 new RecordingProjectMemberRepository(false)
         );
@@ -117,6 +132,9 @@ class UserSessionServiceTest {
         RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
         UserSessionService service = new UserSessionService(
                 sessionsRepository,
+                new RecordingUserSessionRepository(activeSession()),
+                new RecordingUserRefreshTokenRepository(),
+                new StubUserRepository(true),
                 new StubProjectRepository(false),
                 memberRepository
         );
@@ -127,6 +145,95 @@ class UserSessionServiceTest {
 
         assertThat(memberRepository.projectId).isNull();
         assertThat(sessionsRepository.projectId).isNull();
+    }
+
+    @Test
+    void shouldRevokeSessionAndRefreshTokensWhenAuthenticatedAccountCanManageSessions() {
+        RecordingUserSessionRepository sessionRepository = new RecordingUserSessionRepository(activeSession());
+        RecordingUserRefreshTokenRepository refreshTokenRepository = new RecordingUserRefreshTokenRepository();
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true, true);
+        UserSessionService service = new UserSessionService(
+                new RecordingUserSessionDetailsRepository(),
+                sessionRepository,
+                refreshTokenRepository,
+                new StubUserRepository(true),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        service.revokeById(PROJECT_ID, "user-id", "session-id", ACCOUNT_ID);
+
+        assertThat(refreshTokenRepository.revokedSessionId).isEqualTo("session-id");
+        assertThat(sessionRepository.revokedSessionId).isEqualTo("session-id");
+        assertThat(memberRepository.managementRoles).containsExactly(ProjectMemberRole.OWNER, ProjectMemberRole.ADMIN);
+    }
+
+    @Test
+    void shouldRevokeAllUserSessionsAndRefreshTokensWhenAuthenticatedAccountCanManageSessions() {
+        RecordingUserSessionRepository sessionRepository = new RecordingUserSessionRepository(activeSession());
+        RecordingUserRefreshTokenRepository refreshTokenRepository = new RecordingUserRefreshTokenRepository();
+        UserSessionService service = new UserSessionService(
+                new RecordingUserSessionDetailsRepository(),
+                sessionRepository,
+                refreshTokenRepository,
+                new StubUserRepository(true),
+                new StubProjectRepository(true),
+                new RecordingProjectMemberRepository(true, true)
+        );
+
+        service.revokeAllByUserId(PROJECT_ID, "user-id", ACCOUNT_ID);
+
+        assertThat(refreshTokenRepository.revokedAllProjectId).isEqualTo(PROJECT_ID);
+        assertThat(refreshTokenRepository.revokedAllUserId).isEqualTo("user-id");
+        assertThat(sessionRepository.revokedAllProjectId).isEqualTo(PROJECT_ID);
+        assertThat(sessionRepository.revokedAllUserId).isEqualTo("user-id");
+    }
+
+    @Test
+    void shouldDenyRevokeSessionWhenAuthenticatedAccountCannotManageSessions() {
+        RecordingUserSessionRepository sessionRepository = new RecordingUserSessionRepository(activeSession());
+        RecordingUserRefreshTokenRepository refreshTokenRepository = new RecordingUserRefreshTokenRepository();
+        UserSessionService service = new UserSessionService(
+                new RecordingUserSessionDetailsRepository(),
+                sessionRepository,
+                refreshTokenRepository,
+                new StubUserRepository(true),
+                new StubProjectRepository(true),
+                new RecordingProjectMemberRepository(true, false)
+        );
+
+        assertThatThrownBy(() -> service.revokeById(PROJECT_ID, "user-id", "session-id", ACCOUNT_ID))
+                .isInstanceOf(ProjectAccessDeniedException.class);
+
+        assertThat(refreshTokenRepository.revokedSessionId).isNull();
+        assertThat(sessionRepository.revokedSessionId).isNull();
+    }
+
+    @Test
+    void shouldRejectRevokingSessionThatDoesNotBelongToUser() {
+        RecordingUserSessionRepository sessionRepository = new RecordingUserSessionRepository(
+                UserSession.builder()
+                        .id("session-id")
+                        .projectId(PROJECT_ID)
+                        .userId("another-user-id")
+                        .build()
+        );
+        RecordingUserRefreshTokenRepository refreshTokenRepository = new RecordingUserRefreshTokenRepository();
+        UserSessionService service = new UserSessionService(
+                new RecordingUserSessionDetailsRepository(),
+                sessionRepository,
+                refreshTokenRepository,
+                new StubUserRepository(true),
+                new StubProjectRepository(true),
+                new RecordingProjectMemberRepository(true, true)
+        );
+
+        assertThatThrownBy(() -> service.revokeById(PROJECT_ID, "user-id", "session-id", ACCOUNT_ID))
+                .isInstanceOf(UserSessionNotFoundException.class)
+                .hasMessage("Sessão de usuário não encontrada.");
+
+        assertThat(refreshTokenRepository.revokedSessionId).isNull();
+        assertThat(sessionRepository.revokedSessionId).isNull();
     }
 
     private static class RecordingUserSessionDetailsRepository implements UserSessionDetailsRepository {
@@ -162,6 +269,159 @@ class UserSessionServiceTest {
                     1,
                     1
             );
+        }
+    }
+
+    private static UserSession activeSession() {
+        return UserSession.builder()
+                .id("session-id")
+                .projectId(PROJECT_ID)
+                .userId("user-id")
+                .lastUsedAt(Instant.now())
+                .build();
+    }
+
+    private static class RecordingUserSessionRepository implements UserSessionRepository {
+        private final UserSession session;
+        private String revokedSessionId;
+        private String revokedAllProjectId;
+        private String revokedAllUserId;
+
+        private RecordingUserSessionRepository(UserSession session) {
+            this.session = session;
+        }
+
+        @Override
+        public UserSession save(UserSession userSession) {
+            return userSession;
+        }
+
+        @Override
+        public Optional<UserSession> findById(String id) {
+            if (session != null && id.equals(session.getId())) {
+                return Optional.of(session);
+            }
+
+            return Optional.empty();
+        }
+
+        @Override
+        public List<UserSession> findAllByProjectIdAndUserId(String projectId, String userId) {
+            return List.of();
+        }
+
+        @Override
+        public List<UserSession> findAllByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId) {
+            return List.of();
+        }
+
+        @Override
+        public void revokeById(String id) {
+            revokedSessionId = id;
+        }
+
+        @Override
+        public void revokeAllByProjectIdAndUserId(String projectId, String userId) {
+            revokedAllProjectId = projectId;
+            revokedAllUserId = userId;
+        }
+
+        @Override
+        public long countByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId) {
+            return 0;
+        }
+    }
+
+    private static class RecordingUserRefreshTokenRepository implements UserRefreshTokenRepository {
+        private String revokedSessionId;
+        private String revokedAllProjectId;
+        private String revokedAllUserId;
+
+        @Override
+        public UserRefreshToken save(UserRefreshToken refreshToken) {
+            return refreshToken;
+        }
+
+        @Override
+        public Optional<UserRefreshToken> findById(String id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UserRefreshToken> findByHash(String hash) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<UserRefreshToken> findAllByProjectIdAndUserId(String projectId, String userId) {
+            return List.of();
+        }
+
+        @Override
+        public List<UserRefreshToken> findAllBySessionId(String sessionId) {
+            return List.of();
+        }
+
+        @Override
+        public void revokeSession(String sessionId) {
+            revokedSessionId = sessionId;
+        }
+
+        @Override
+        public void revokeAllByProjectIdAndUserId(String projectId, String userId) {
+            revokedAllProjectId = projectId;
+            revokedAllUserId = userId;
+        }
+
+        @Override
+        public void deleteById(String id) {
+        }
+    }
+
+    private static class StubUserRepository implements UserRepository {
+        private final boolean exists;
+
+        private StubUserRepository(boolean exists) {
+            this.exists = exists;
+        }
+
+        @Override
+        public User save(User user) {
+            return user;
+        }
+
+        @Override
+        public Optional<User> findById(String id) {
+            return exists ? Optional.of(User.builder().id(id).build()) : Optional.empty();
+        }
+
+        @Override
+        public Optional<User> findByProjectIdAndId(String projectId, String id) {
+            return exists ? Optional.of(User.builder().id(id).projectId(projectId).build()) : Optional.empty();
+        }
+
+        @Override
+        public Optional<User> findByProjectIdAndEmailIgnoreCase(String projectId, String email) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean existsByProjectIdAndEmailIgnoreCase(String projectId, String email) {
+            return false;
+        }
+
+        @Override
+        public boolean existsByProjectIdAndEmailIgnoreCaseAndIdNot(String projectId, String email, String id) {
+            return false;
+        }
+
+        @Override
+        public PageResult<User> findAllByProjectId(String projectId, Pagination pagination, UserFilter filter) {
+            return new PageResult<>(List.of(), pagination.page(), pagination.size(), 0, 0);
+        }
+
+        @Override
+        public void deleteById(String id) {
         }
     }
 
@@ -209,11 +469,18 @@ class UserSessionServiceTest {
 
     private static class RecordingProjectMemberRepository implements ProjectMemberRepository {
         private final boolean member;
+        private final boolean canManage;
         private String projectId;
         private String accountId;
+        private Collection<ProjectMemberRole> managementRoles;
 
         private RecordingProjectMemberRepository(boolean member) {
+            this(member, false);
+        }
+
+        private RecordingProjectMemberRepository(boolean member, boolean canManage) {
             this.member = member;
+            this.canManage = canManage;
         }
 
         @Override
@@ -239,11 +506,18 @@ class UserSessionServiceTest {
                 String accountId,
                 Collection<ProjectMemberRole> roles
         ) {
-            return false;
+            this.projectId = projectId;
+            this.accountId = accountId;
+            this.managementRoles = roles;
+            return canManage;
         }
 
         @Override
         public void deleteAllByProjectId(String projectId) {
+        }
+
+        @Override
+        public void deleteByProjectIdAndAccountId(String projectId, String accountId) {
         }
     }
 }

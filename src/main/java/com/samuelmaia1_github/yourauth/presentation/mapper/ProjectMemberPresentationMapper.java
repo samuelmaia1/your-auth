@@ -10,6 +10,7 @@ public class ProjectMemberPresentationMapper {
 
     public static ProjectMemberResponseDTO toResponseDTO(ProjectMemberDetails details) {
         return new ProjectMemberResponseDTO(
+                details.accountId(),
                 details.name(),
                 details.lastName(),
                 details.role(),

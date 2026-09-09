@@ -10,6 +10,7 @@ import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberDetails
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRepository;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRole;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberService;
+import com.samuelmaia1_github.yourauth.domain.projectmember.exceptions.ProjectMemberNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,7 @@ class ProjectMemberServiceTest {
         PageResult<ProjectMemberDetails> members = service.findAllByProjectId(PROJECT_ID, ACCOUNT_ID, pagination);
 
         assertThat(members.content()).hasSize(1);
+        assertThat(members.content().getFirst().accountId()).isEqualTo(ACCOUNT_ID);
         assertThat(members.content().getFirst().name()).isEqualTo("Samuel");
         assertThat(members.content().getFirst().lastName()).isEqualTo("Maia");
         assertThat(members.content().getFirst().role()).isEqualTo(ProjectMemberRole.OWNER);
@@ -85,6 +87,110 @@ class ProjectMemberServiceTest {
         assertThat(detailsRepository.projectId).isNull();
     }
 
+    @Test
+    void shouldDeleteDeveloperWhenAuthenticatedAccountIsAdmin() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("admin-account-id", ProjectMemberRole.ADMIN);
+        memberRepository.target = member("developer-account-id", ProjectMemberRole.DEVELOPER);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        service.delete(PROJECT_ID, "developer-account-id", "admin-account-id");
+
+        assertThat(memberRepository.deletedProjectId).isEqualTo(PROJECT_ID);
+        assertThat(memberRepository.deletedAccountId).isEqualTo("developer-account-id");
+    }
+
+    @Test
+    void shouldDeleteAdminWhenAuthenticatedAccountIsOwner() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("owner-account-id", ProjectMemberRole.OWNER);
+        memberRepository.target = member("admin-account-id", ProjectMemberRole.ADMIN);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        service.delete(PROJECT_ID, "admin-account-id", "owner-account-id");
+
+        assertThat(memberRepository.deletedProjectId).isEqualTo(PROJECT_ID);
+        assertThat(memberRepository.deletedAccountId).isEqualTo("admin-account-id");
+    }
+
+    @Test
+    void shouldDenyDeleteAdminWhenAuthenticatedAccountIsAdmin() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("admin-account-id", ProjectMemberRole.ADMIN);
+        memberRepository.target = member("another-admin-account-id", ProjectMemberRole.ADMIN);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        assertThatThrownBy(() -> service.delete(PROJECT_ID, "another-admin-account-id", "admin-account-id"))
+                .isInstanceOf(ProjectAccessDeniedException.class)
+                .hasMessage("Apenas o owner pode deletar um membro admin.");
+
+        assertThat(memberRepository.deletedAccountId).isNull();
+    }
+
+    @Test
+    void shouldDenyDeleteWhenAuthenticatedAccountCannotManageMembers() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("viewer-account-id", ProjectMemberRole.VIEWER);
+        memberRepository.target = member("developer-account-id", ProjectMemberRole.DEVELOPER);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        assertThatThrownBy(() -> service.delete(PROJECT_ID, "developer-account-id", "viewer-account-id"))
+                .isInstanceOf(ProjectAccessDeniedException.class);
+
+        assertThat(memberRepository.deletedAccountId).isNull();
+    }
+
+    @Test
+    void shouldDenyDeleteOwnerMember() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("owner-account-id", ProjectMemberRole.OWNER);
+        memberRepository.target = member("owner-account-id", ProjectMemberRole.OWNER);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        assertThatThrownBy(() -> service.delete(PROJECT_ID, "owner-account-id", "owner-account-id"))
+                .isInstanceOf(ProjectAccessDeniedException.class)
+                .hasMessage("O owner do projeto não pode ser removido dos membros.");
+
+        assertThat(memberRepository.deletedAccountId).isNull();
+    }
+
+    @Test
+    void shouldThrowWhenTargetMemberDoesNotExist() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("owner-account-id", ProjectMemberRole.OWNER);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        assertThatThrownBy(() -> service.delete(PROJECT_ID, "missing-account-id", "owner-account-id"))
+                .isInstanceOf(ProjectMemberNotFoundException.class)
+                .hasMessage("Membro do projeto não encontrado.");
+
+        assertThat(memberRepository.deletedAccountId).isNull();
+    }
+
     private static class RecordingProjectMemberDetailsRepository implements ProjectMemberDetailsRepository {
         private String projectId;
         private Pagination pagination;
@@ -96,6 +202,7 @@ class ProjectMemberServiceTest {
 
             return new PageResult<>(
                     List.of(new ProjectMemberDetails(
+                            ACCOUNT_ID,
                             "Samuel",
                             "Maia",
                             ProjectMemberRole.OWNER,
@@ -107,6 +214,14 @@ class ProjectMemberServiceTest {
                     1
             );
         }
+    }
+
+    private static ProjectMember member(String accountId, ProjectMemberRole role) {
+        return ProjectMember.builder()
+                .projectId(PROJECT_ID)
+                .accountId(accountId)
+                .role(role)
+                .build();
     }
 
     private static class StubProjectRepository implements ProjectRepository {
@@ -153,8 +268,12 @@ class ProjectMemberServiceTest {
 
     private static class RecordingProjectMemberRepository implements ProjectMemberRepository {
         private final boolean member;
+        private ProjectMember requester;
+        private ProjectMember target;
         private String projectId;
         private String accountId;
+        private String deletedProjectId;
+        private String deletedAccountId;
 
         private RecordingProjectMemberRepository(boolean member) {
             this.member = member;
@@ -167,6 +286,14 @@ class ProjectMemberServiceTest {
 
         @Override
         public Optional<ProjectMember> findByProjectIdAndAccountId(String projectId, String accountId) {
+            if (requester != null && accountId.equals(requester.getAccountId())) {
+                return Optional.of(requester);
+            }
+
+            if (target != null && accountId.equals(target.getAccountId())) {
+                return Optional.of(target);
+            }
+
             return Optional.empty();
         }
 
@@ -188,6 +315,12 @@ class ProjectMemberServiceTest {
 
         @Override
         public void deleteAllByProjectId(String projectId) {
+        }
+
+        @Override
+        public void deleteByProjectIdAndAccountId(String projectId, String accountId) {
+            deletedProjectId = projectId;
+            deletedAccountId = accountId;
         }
     }
 }
