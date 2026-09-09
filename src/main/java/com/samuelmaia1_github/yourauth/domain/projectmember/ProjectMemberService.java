@@ -5,7 +5,9 @@ import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDe
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFoundException;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
+import com.samuelmaia1_github.yourauth.infra.cache.names.ProjectMemberCacheNames;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,6 +17,10 @@ public class ProjectMemberService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
 
+    @Cacheable(
+            cacheNames = ProjectMemberCacheNames.PROJECT_MEMBERS_BY_PROJECT_ID,
+            key = "#projectId + ':' + #accountId + ':' + #pagination.page + ':' + #pagination.size"
+    )
     public PageResult<ProjectMemberDetails> findAllByProjectId(
             String projectId,
             String accountId,

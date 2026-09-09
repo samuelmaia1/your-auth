@@ -1,12 +1,16 @@
 package com.samuelmaia1_github.yourauth.domain.project.authconfig;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Builder
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class AuthConfig {
     public static final int DEFAULT_ACCESS_TOKEN_EXPIRATION_MINUTES = 15;
     public static final int DEFAULT_REFRESH_TOKEN_EXPIRATION_DAYS = 7;

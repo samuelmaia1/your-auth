@@ -10,13 +10,19 @@ import com.samuelmaia1_github.yourauth.domain.projectapikey.exceptions.ProjectAp
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import com.samuelmaia1_github.yourauth.domain.user.exceptions.UserNotFoundException;
+import com.samuelmaia1_github.yourauth.infra.cache.names.AccountCacheNames;
 import com.samuelmaia1_github.yourauth.infra.interfaces.IPasswordEncoder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+
+import static com.samuelmaia1_github.yourauth.infra.cache.names.UserCacheNames.*;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,20 @@ public class UserService {
     private final IPasswordEncoder encoder;
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = USERS_BY_PROJECT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = AccountCacheNames.ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = AccountCacheNames.ACCOUNT_USAGE_BY_OWNER_ACCOUNT_ID,
+                    allEntries = true
+            )
+    })
     public User create(User user, String accountId) {
         ensureProjectExists(user.getProjectId());
         ensureCanManage(user.getProjectId(), accountId);
@@ -41,6 +61,20 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = USERS_BY_PROJECT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = AccountCacheNames.ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = AccountCacheNames.ACCOUNT_USAGE_BY_OWNER_ACCOUNT_ID,
+                    allEntries = true
+            )
+    })
     public User createWithApiKey(User user, Set<ProjectApiKeyScope> scopes) {
         ensureCanCreateWithApiKey(scopes);
         ensureProjectExists(user.getProjectId());
@@ -68,6 +102,11 @@ public class UserService {
         }
     }
 
+    @Cacheable(
+            cacheNames = USERS_BY_PROJECT_ID,
+            key = "#projectId + ':' + #accountId + ':' + #pagination.page + ':' + #pagination.size + ':' "
+                    + "+ (#filter == null ? 'null' : #filter.email + ':' + #filter.status)"
+    )
     public PageResult<User> findAllByProjectId(
             String projectId,
             String accountId,
@@ -80,6 +119,10 @@ public class UserService {
         return userRepository.findAllByProjectId(projectId, pagination, filter);
     }
 
+    @Cacheable(
+            cacheNames = USER_BY_ID,
+            key = "#projectId + ':' + #userId + ':' + #accountId"
+    )
     public User findById(String projectId, String userId, String accountId) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
@@ -88,6 +131,16 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = USER_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = USERS_BY_PROJECT_ID,
+                    allEntries = true
+            )
+    })
     public User update(String projectId, String userId, User user, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);
@@ -121,6 +174,24 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = USER_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = USERS_BY_PROJECT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = AccountCacheNames.ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = AccountCacheNames.ACCOUNT_USAGE_BY_OWNER_ACCOUNT_ID,
+                    allEntries = true
+            )
+    })
     public void delete(String projectId, String userId, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);

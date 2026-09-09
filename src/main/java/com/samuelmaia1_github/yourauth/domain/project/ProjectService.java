@@ -15,9 +15,20 @@ import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberReposit
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.samuelmaia1_github.yourauth.infra.cache.names.AccountCacheNames.*;
+import static com.samuelmaia1_github.yourauth.infra.cache.names.AuthConfigCacheNames.*;
+import static com.samuelmaia1_github.yourauth.infra.cache.names.PasswordConfigCacheNames.*;
+import static com.samuelmaia1_github.yourauth.infra.cache.names.ProjectApiKeyCacheNames.*;
+import static com.samuelmaia1_github.yourauth.infra.cache.names.ProjectCacheNames.*;
+import static com.samuelmaia1_github.yourauth.infra.cache.names.ProjectMemberCacheNames.*;
+import static com.samuelmaia1_github.yourauth.infra.cache.names.UserCacheNames.*;
 
 @Service
 @RequiredArgsConstructor
@@ -35,11 +46,39 @@ public class ProjectService {
     private final ProjectPolicy policy;
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = PROJECT_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
+                    key = "#project.ownerAccountId"
+            ),
+            @CacheEvict(
+                    cacheNames = ACCOUNT_USAGE_BY_OWNER_ACCOUNT_ID,
+                    key = "#project.ownerAccountId"
+            )
+    })
     public Project create(Project project, PasswordConfig requestedPasswordConfig) {
         return create(project, requestedPasswordConfig, null);
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = PROJECT_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
+                    key = "#project.ownerAccountId"
+            ),
+            @CacheEvict(
+                    cacheNames = ACCOUNT_USAGE_BY_OWNER_ACCOUNT_ID,
+                    key = "#project.ownerAccountId"
+            )
+    })
     public Project create(Project project, PasswordConfig requestedPasswordConfig, AuthConfig requestedAuthConfig) {
         accountRepository.findById(project.getOwnerAccountId())
                 .orElseThrow(AccountNotFoundException::new);
@@ -71,6 +110,10 @@ public class ProjectService {
         return createdProject;
     }
 
+    @Cacheable(
+            cacheNames = PROJECT_BY_ID,
+            key = "#id + ':' + #accountId"
+    )
     public Project findById(String id, String accountId) {
         Project project = findProjectOrThrow(id);
         ensureCanRead(project.getId(), accountId);
@@ -78,11 +121,29 @@ public class ProjectService {
         return project;
     }
 
+    @Cacheable(
+            cacheNames = PROJECT_BY_ACCOUNT_ID,
+            key = "#accountId + ':' + #pagination.page + ':' + #pagination.size"
+    )
     public PageResult<Project> findAllByAccountId(String accountId, Pagination pagination) {
         return repository.findAllByMemberAccountId(accountId, pagination);
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = PROJECT_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PROJECT_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
+                    allEntries = true
+            )
+    })
     public Project update(String id, Project project, String accountId) {
         Project currentProject = findProjectOrThrow(id);
         ensureCanManage(currentProject.getId(), accountId);
@@ -105,6 +166,56 @@ public class ProjectService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = PROJECT_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PROJECT_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = ACCOUNT_USAGE_BY_OWNER_ACCOUNT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = AUTH_CONFIG_BY_PROJECT_AND_ACCOUNT,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PASSWORD_CONFIG_BY_PROJECT_ID,
+                    key = "#id"
+            ),
+            @CacheEvict(
+                    cacheNames = PASSWORD_CONFIG_BY_PROJECT_AND_ACCOUNT,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PROJECT_MEMBERS_BY_PROJECT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = USER_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = USERS_BY_PROJECT_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PROJECT_API_KEY_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PROJECT_API_KEYS_BY_PROJECT_ID,
+                    allEntries = true
+            )
+    })
     public void delete(String id, String accountId) {
         Project project = findProjectOrThrow(id);
         ensureCanManage(project.getId(), accountId);

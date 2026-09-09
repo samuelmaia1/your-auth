@@ -7,8 +7,11 @@ import com.samuelmaia1_github.yourauth.domain.project.authconfig.exceptions.Auth
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.exceptions.InvalidAuthConfigException;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRepository;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRole;
+import com.samuelmaia1_github.yourauth.infra.cache.names.AuthConfigCacheNames;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +28,10 @@ public class AuthConfigService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
 
+    @Cacheable(
+            cacheNames = AuthConfigCacheNames.AUTH_CONFIG_BY_PROJECT_AND_ACCOUNT,
+            key = "#projectId + ':' + #accountId"
+    )
     public AuthConfig findByProjectId(String projectId, String accountId) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
@@ -33,6 +40,10 @@ public class AuthConfigService {
     }
 
     @Transactional
+    @CacheEvict(
+            cacheNames = AuthConfigCacheNames.AUTH_CONFIG_BY_PROJECT_AND_ACCOUNT,
+            allEntries = true
+    )
     public AuthConfig update(String projectId, AuthConfig requestedConfig, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);

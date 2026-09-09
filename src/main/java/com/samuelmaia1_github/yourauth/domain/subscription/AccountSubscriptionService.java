@@ -7,9 +7,13 @@ import com.samuelmaia1_github.yourauth.domain.plan.exceptions.PlanNotFoundExcept
 import com.samuelmaia1_github.yourauth.domain.subscription.exceptions.AccountSubscriptionNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+
+import static com.samuelmaia1_github.yourauth.infra.cache.names.SubscriptionCacheNames.*;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +23,10 @@ public class AccountSubscriptionService {
     private final PlanRepository planRepository;
 
     @Transactional
+    @CacheEvict(
+            cacheNames = CURRENT_BY_ACCOUNT_ID,
+            key = "#accountId"
+    )
     public AccountSubscription createFreeSubscription(String accountId) {
         return subscriptionRepository.findCurrentByAccountId(accountId)
                 .map(this::attachPlan)
@@ -32,6 +40,10 @@ public class AccountSubscriptionService {
                 ));
     }
 
+    @Cacheable(
+            cacheNames = CURRENT_BY_ACCOUNT_ID,
+            key = "#accountId"
+    )
     public AccountSubscription findCurrentByAccountId(String accountId) {
         AccountSubscription subscription = subscriptionRepository.findCurrentByAccountId(accountId)
                 .orElseThrow(AccountSubscriptionNotFoundException::new);
@@ -40,6 +52,10 @@ public class AccountSubscriptionService {
     }
 
     @Transactional
+    @CacheEvict(
+            cacheNames = CURRENT_BY_ACCOUNT_ID,
+            key = "#accountId"
+    )
     public AccountSubscription changePlan(
             String accountId,
             PlanCode planCode,

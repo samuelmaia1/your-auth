@@ -1,10 +1,14 @@
 package com.samuelmaia1_github.yourauth.domain.project.passwordconfig;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Builder
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class PasswordConfig {
     public static final int DEFAULT_MIN_SIZE = 1;
     public static final int DEFAULT_MAX_SIZE = 120;

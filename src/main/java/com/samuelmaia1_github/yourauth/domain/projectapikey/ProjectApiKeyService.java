@@ -15,10 +15,15 @@ import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.samuelmaia1_github.yourauth.infra.cache.names.ProjectApiKeyCacheNames.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +41,10 @@ public class ProjectApiKeyService {
     private final ProjectApiKeyHasher hasher;
 
     @Transactional
+    @CacheEvict(
+            cacheNames = PROJECT_API_KEYS_BY_PROJECT_ID,
+            allEntries = true
+    )
     public CreatedProjectApiKey create(ProjectApiKey requestedApiKey, String accountId) {
         ensureProjectExists(requestedApiKey.getProjectId());
         ensureCanManage(requestedApiKey.getProjectId(), accountId);
@@ -61,6 +70,11 @@ public class ProjectApiKeyService {
         );
     }
 
+    @Cacheable(
+            cacheNames = PROJECT_API_KEYS_BY_PROJECT_ID,
+            key = "#projectId + ':' + #accountId + ':' + #pagination.page + ':' + #pagination.size + ':' "
+                    + "+ (#filter == null ? 'null' : #filter.createdBy)"
+    )
     public PageResult<ProjectApiKeyDetails> findAllByProjectId(
             String projectId,
             String accountId,
@@ -83,6 +97,10 @@ public class ProjectApiKeyService {
         );
     }
 
+    @Cacheable(
+            cacheNames = PROJECT_API_KEY_BY_ID,
+            key = "#projectId + ':' + #apiKeyId + ':' + #accountId"
+    )
     public ProjectApiKeyDetails findById(String projectId, String apiKeyId, String accountId) {
         ensureProjectExists(projectId);
         ensureCanRead(projectId, accountId);
@@ -91,6 +109,16 @@ public class ProjectApiKeyService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = PROJECT_API_KEY_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PROJECT_API_KEYS_BY_PROJECT_ID,
+                    allEntries = true
+            )
+    })
     public void delete(String projectId, String apiKeyId, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);
@@ -101,6 +129,16 @@ public class ProjectApiKeyService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = PROJECT_API_KEY_BY_ID,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = PROJECT_API_KEYS_BY_PROJECT_ID,
+                    allEntries = true
+            )
+    })
     public ProjectApiKey revoke(String projectId, String apiKeyId, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);
