@@ -41,7 +41,9 @@ public class PlanService {
         Plan plan = repository.findByCode(code)
                 .orElseThrow(PlanNotFoundException::new);
 
-        repository.saveLimits(plan.getId(), settings.toLimits(plan.getId()));
+        if (settings.hasChanges()) {
+            repository.saveLimits(plan.getId(), settings.toLimits(plan.getId()));
+        }
 
         return repository.findById(plan.getId())
                 .orElseThrow(PlanNotFoundException::new);

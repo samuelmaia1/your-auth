@@ -180,12 +180,15 @@ class UserAuthServiceTest {
     }
 
     private static class StubTokenService extends TokenService {
+        private String generatedSessionId;
+
         private StubTokenService() {
             super("secret", "issuer", Duration.ofMinutes(15));
         }
 
         @Override
-        public String generateToken(User user, String projectId, AuthConfig config) {
+        public String generateToken(User user, String projectId, AuthConfig config, String sessionId) {
+            generatedSessionId = sessionId;
             return "access-token";
         }
     }

@@ -1,11 +1,11 @@
 package com.samuelmaia1_github.yourauth.presentation.dto.auth;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.TokenDTO;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record LoginResponseDTO(
+public record AccountLoginSessionDTO(
         AccountResponseDTO account,
-        String token
+        TokenDTO accessToken,
+        TokenDTO refreshToken
 ) {
 }

@@ -77,7 +77,10 @@ public class ProjectMemberController {
     }
 
     @DeleteMapping("/{accountId}")
-    @Operation(summary = "Remove um membro de um projeto")
+    @Operation(
+            summary = "Remove um membro de um projeto",
+            description = "Owner pode remover qualquer membro. Admin pode remover membros que nao sejam admin. Developer e viewer nao podem remover membros."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Membro removido."),
             @ApiResponse(

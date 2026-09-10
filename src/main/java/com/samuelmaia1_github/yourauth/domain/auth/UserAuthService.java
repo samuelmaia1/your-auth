@@ -70,13 +70,13 @@ public class UserAuthService {
 
             UserSession savedSession = sessionRepository.save(session);
 
-            TokenDTO accessToken = buildAccessToken(user, projectId, authConfig);
             TokenDTO refreshToken = refreshTokenService.createUserRefreshToken(
                     projectId,
                     user.getId(),
                     savedSession.getId(),
                     userAgent
             );
+            TokenDTO accessToken = buildAccessToken(user, projectId, authConfig, savedSession.getId());
 
             user.recordSuccessfulLogin(ipAddress, userAgent);
 
@@ -118,7 +118,7 @@ public class UserAuthService {
         sessionRepository.save(session);
 
         return new UserTokensResponseDTO(
-                buildAccessToken(user, refreshResponse.projectId(), authConfig),
+                buildAccessToken(user, refreshResponse.projectId(), authConfig, session.getId()),
                 refreshResponse.refreshToken()
         );
     }
@@ -171,8 +171,8 @@ public class UserAuthService {
         return session;
     }
 
-    private TokenDTO buildAccessToken(User user, String projectId, AuthConfig authConfig) {
-        String accessToken = tokenService.generateToken(user, projectId, authConfig);
+    private TokenDTO buildAccessToken(User user, String projectId, AuthConfig authConfig, String sessionId) {
+        String accessToken = tokenService.generateToken(user, projectId, authConfig, sessionId);
         Duration accessTokenDuration = Duration.ofMinutes(authConfig.getAccessTokenExpirationMinutes());
 
         return new TokenDTO(accessToken, accessTokenDuration);

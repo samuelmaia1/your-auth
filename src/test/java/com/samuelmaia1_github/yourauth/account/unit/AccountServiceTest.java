@@ -85,6 +85,27 @@ public class AccountServiceTest {
     }
 
     @Test
+    void shouldFindAccountByEmail() {
+        Account account = Account.builder()
+                .id("account-id")
+                .email("email@email.com")
+                .build();
+        RecordingAccountRepository repository = new RecordingAccountRepository();
+        repository.accountByEmail = Optional.of(account);
+        AccountService service = new AccountService(
+                repository,
+                new RecordingAccountPolicy(),
+                new StubPasswordEncoder(),
+                new RecordingAccountSubscriptionService()
+        );
+
+        Account foundAccount = service.findByEmail("email@email.com");
+
+        assertThat(foundAccount).isSameAs(account);
+        assertThat(repository.searchedEmail).isEqualTo("email@email.com");
+    }
+
+    @Test
     void shouldThrowWhenAuthenticatedAccountIsNotFound() {
         RecordingAccountRepository repository = new RecordingAccountRepository();
         AccountService service = new AccountService(

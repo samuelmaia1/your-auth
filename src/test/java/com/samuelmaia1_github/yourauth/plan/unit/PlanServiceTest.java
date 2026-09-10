@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
 class PlanServiceTest {
     @Test
@@ -44,25 +45,101 @@ class PlanServiceTest {
         assertThat(plan.getLimits())
                 .extracting(PlanLimit::getCode, PlanLimit::getValue)
                 .containsExactlyInAnyOrder(
-                        org.assertj.core.groups.Tuple.tuple(PlanLimitCode.MAX_PROJECTS.name(), 1L),
-                        org.assertj.core.groups.Tuple.tuple(PlanLimitCode.MAX_USERS_TOTAL.name(), 100L),
-                        org.assertj.core.groups.Tuple.tuple(PlanLimitCode.MAX_ACTIVE_SESSIONS_TOTAL.name(), 200L)
+                        tuple(PlanLimitCode.MAX_PROJECTS.name(), 1L),
+                        tuple(PlanLimitCode.MAX_USERS_TOTAL.name(), 100L),
+                        tuple(PlanLimitCode.MAX_ACTIVE_SESSIONS_TOTAL.name(), 200L)
                 );
     }
 
-    private static Plan plan(String id, PlanCode code) {
+    @Test
+    void shouldUpdateOnlyProvidedPlanLimits() {
+        RecordingPlanRepository repository = new RecordingPlanRepository(List.of(
+                plan("free", PlanCode.FREE, List.of(
+                        limit("free", PlanLimitCode.MAX_PROJECTS, 1L),
+                        limit("free", PlanLimitCode.MAX_USERS_TOTAL, 100L),
+                        limit("free", PlanLimitCode.MAX_ACTIVE_SESSIONS_TOTAL, 200L)
+                ))
+        ));
+        PlanService service = new PlanService(repository);
+        PlanLimitSettings settings = new PlanLimitSettings(
+                2L,
+                true,
+                null,
+                false,
+                null,
+                true
+        );
+
+        Plan plan = service.updateLimits(PlanCode.FREE, settings);
+
+        assertThat(repository.savedPlanId).isEqualTo("free");
+        assertThat(repository.savedLimits)
+                .extracting(PlanLimit::getCode, PlanLimit::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple(PlanLimitCode.MAX_PROJECTS.name(), 2L),
+                        tuple(PlanLimitCode.MAX_ACTIVE_SESSIONS_TOTAL.name(), null)
+                );
+        assertThat(plan.getLimits())
+                .extracting(PlanLimit::getCode, PlanLimit::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple(PlanLimitCode.MAX_PROJECTS.name(), 2L),
+                        tuple(PlanLimitCode.MAX_USERS_TOTAL.name(), 100L),
+                        tuple(PlanLimitCode.MAX_ACTIVE_SESSIONS_TOTAL.name(), null)
+                );
+    }
+
+    @Test
+    void shouldReturnPlanWithoutSavingWhenNoLimitWasProvided() {
+        RecordingPlanRepository repository = new RecordingPlanRepository(List.of(
+                plan("free", PlanCode.FREE, List.of(
+                        limit("free", PlanLimitCode.MAX_PROJECTS, 1L),
+                        limit("free", PlanLimitCode.MAX_USERS_TOTAL, 100L)
+                ))
+        ));
+        PlanService service = new PlanService(repository);
+
+        Plan plan = service.updateLimits(PlanCode.FREE, new PlanLimitSettings(
+                null,
+                false,
+                null,
+                false,
+                null,
+                false
+        ));
+
+        assertThat(repository.savedPlanId).isNull();
+        assertThat(repository.savedLimits).isEmpty();
+        assertThat(plan.getLimits())
+                .extracting(PlanLimit::getCode, PlanLimit::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple(PlanLimitCode.MAX_PROJECTS.name(), 1L),
+                        tuple(PlanLimitCode.MAX_USERS_TOTAL.name(), 100L)
+                );
+    }
+
+    private static Plan plan(String id, PlanCode code, List<PlanLimit> limits) {
         return Plan.builder()
                 .id(id)
                 .code(code)
                 .name(code.name())
                 .active(true)
+                .limits(limits)
                 .build();
+    }
+
+    private static Plan plan(String id, PlanCode code) {
+        return plan(id, code, List.of());
+    }
+
+    private static PlanLimit limit(String planId, PlanLimitCode code, Long value) {
+        return PlanLimit.countLimit(planId, code, value);
     }
 
     private static class RecordingPlanRepository implements PlanRepository {
         private final List<Plan> plans;
         private boolean findAllActiveCalled;
         private String savedPlanId;
+        private List<PlanLimit> savedLimits = List.of();
 
         private RecordingPlanRepository(List<Plan> plans) {
             this.plans = new ArrayList<>(plans);
@@ -91,18 +168,30 @@ class PlanServiceTest {
         @Override
         public List<PlanLimit> saveLimits(String planId, List<PlanLimit> limits) {
             savedPlanId = planId;
+            savedLimits = limits;
 
             for (int i = 0; i < plans.size(); i++) {
                 Plan plan = plans.get(i);
 
                 if (plan.getId().equals(planId)) {
                     plans.set(i, plan.toBuilder()
-                            .limits(limits)
+                            .limits(mergeLimits(plan.getLimits(), limits))
                             .build());
                 }
             }
 
             return limits;
+        }
+
+        private static List<PlanLimit> mergeLimits(List<PlanLimit> currentLimits, List<PlanLimit> newLimits) {
+            List<PlanLimit> mergedLimits = new ArrayList<>(currentLimits);
+
+            for (PlanLimit limit : newLimits) {
+                mergedLimits.removeIf(currentLimit -> currentLimit.getCode().equals(limit.getCode()));
+                mergedLimits.add(limit);
+            }
+
+            return mergedLimits;
         }
     }
 }

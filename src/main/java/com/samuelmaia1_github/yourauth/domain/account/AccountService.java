@@ -31,12 +31,17 @@ public class AccountService {
     }
 
     public Account findByIdOrEmail(String id, String email) {
-        return findById(id)
-                .or(() -> findByEmail(email))
+        return findOptionalById(id)
+                .or(() -> findOptionalByEmail(email))
                 .orElseThrow(AccountNotFoundException::new);
     }
 
-    private Optional<Account> findById(String id) {
+    public Account findByEmail(String email) {
+        return findOptionalByEmail(email)
+                .orElseThrow(AccountNotFoundException::new);
+    }
+
+    private Optional<Account> findOptionalById(String id) {
         if (isBlank(id)) {
             return Optional.empty();
         }
@@ -44,7 +49,7 @@ public class AccountService {
         return repository.findById(id);
     }
 
-    private Optional<Account> findByEmail(String email) {
+    private Optional<Account> findOptionalByEmail(String email) {
         if (isBlank(email)) {
             return Optional.empty();
         }

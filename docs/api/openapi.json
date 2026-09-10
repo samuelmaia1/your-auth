@@ -29,6 +29,10 @@
       "description": "Consulta de membros de projetos."
     },
     {
+      "name": "Invites",
+      "description": "Convites para participacao em projetos."
+    },
+    {
       "name": "Project Auth Config",
       "description": "Configuracoes de autenticacao de um projeto."
     },
@@ -84,6 +88,7 @@
           "Plans"
         ],
         "summary": "Atualiza os limites de uso de um plano",
+        "description": "Atualiza apenas os limites enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual; campos enviados como null removem o limite numerico.",
         "operationId": "updateLimits",
         "parameters": [
           {
@@ -998,7 +1003,7 @@
           "Public Project Users"
         ],
         "summary": "Renova a sessao web de um usuario final",
-        "description": "Usa a API key do projeto e o cookie refresh_token para gerar novos tokens e redefinir cookies HTTP-only.",
+        "description": "Usa a API key do projeto e o cookie refresh_token para validar a sessao persistida, gerar access token com sessionId e redefinir cookies HTTP-only.",
         "operationId": "refresh",
         "parameters": [
           {
@@ -1089,7 +1094,7 @@
           "Public Project Users"
         ],
         "summary": "Encerra a sessao web de um usuario final",
-        "description": "Usa a API key do projeto e o cookie refresh_token para revogar a sessao e limpar os cookies.",
+        "description": "Usa a API key do projeto e o cookie refresh_token para revogar a sessao, invalidar access tokens emitidos com o mesmo sessionId e limpar os cookies.",
         "operationId": "logout",
         "parameters": [
           {
@@ -1160,7 +1165,7 @@
           "Public Project Users"
         ],
         "summary": "Autentica um usuario final via API key",
-        "description": "Valida credenciais no projeto associado a API key e define cookies HTTP-only de access token e refresh token.",
+        "description": "Valida credenciais no projeto associado a API key e define cookies HTTP-only de access token e refresh token. O access token carrega o sessionId da sessao persistida.",
         "operationId": "login",
         "parameters": [
           {
@@ -1606,6 +1611,7 @@
           "Project Members"
         ],
         "summary": "Remove um membro de um projeto",
+        "description": "Owner pode remover qualquer membro. Admin pode remover membros que nao sejam admin. Developer e viewer nao podem remover membros.",
         "operationId": "deleteMember",
         "parameters": [
           {
@@ -1651,6 +1657,457 @@
           },
           "404": {
             "description": "Projeto ou membro nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/invites": {
+      "get": {
+        "tags": [
+          "Invites"
+        ],
+        "summary": "Lista convites de um projeto",
+        "operationId": "findAllByProject",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "ACCEPTED",
+                "REFUSED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Convites encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultInviteResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametros de paginacao ou filtros invalidos.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Invites"
+        ],
+        "summary": "Envia um convite para participar de um projeto",
+        "operationId": "sendInvite",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendInviteDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Convite enviado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou role nao permitida.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para enviar convites neste projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou conta destinataria nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conta ja participa do projeto ou ja possui convite pendente.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/invites/received": {
+      "get": {
+        "tags": [
+          "Invites"
+        ],
+        "summary": "Lista convites recebidos pela conta autenticada",
+        "operationId": "findReceivedInvites",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "ACCEPTED",
+                "REFUSED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Convites encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultInviteResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametros de paginacao ou filtros invalidos.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/invites/{inviteId}/accept": {
+      "post": {
+        "tags": [
+          "Invites"
+        ],
+        "summary": "Aceita um convite recebido",
+        "operationId": "acceptInvite",
+        "parameters": [
+          {
+            "name": "inviteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Convite aceito.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para acessar este convite.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Convite nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Convite nao esta pendente ou conta ja participa do projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/invites/{inviteId}/refuse": {
+      "post": {
+        "tags": [
+          "Invites"
+        ],
+        "summary": "Recusa um convite recebido",
+        "operationId": "refuseInvite",
+        "parameters": [
+          {
+            "name": "inviteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Convite recusado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para acessar este convite.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Convite nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Convite nao esta pendente.",
             "content": {
               "*/*": {
                 "schema": {
@@ -2169,7 +2626,7 @@
           "Account Authentication"
         ],
         "summary": "Renova a sessao web da conta",
-        "description": "Usa o cookie refresh_token para gerar novos tokens e redefinir os cookies HTTP-only.",
+        "description": "Usa o cookie refresh_token para validar a sessao persistida da conta, rotacionar o refresh token, gerar access token com sessionId e redefinir os cookies HTTP-only.",
         "operationId": "refreshToken",
         "parameters": [
           {
@@ -2256,7 +2713,7 @@
           "Account Authentication"
         ],
         "summary": "Renova a sessao mobile da conta",
-        "description": "Usa o refresh token enviado no corpo da requisicao para gerar um novo par de tokens.",
+        "description": "Usa o refresh token enviado no corpo da requisicao para validar a sessao persistida da conta, rotacionar o refresh token e gerar access token com sessionId.",
         "operationId": "refreshMobileToken",
         "requestBody": {
           "content": {
@@ -2328,18 +2785,38 @@
           "Account Authentication"
         ],
         "summary": "Autentica uma conta proprietaria no fluxo mobile",
-        "description": "Valida as credenciais da conta e retorna access token e refresh token no corpo da resposta.",
+        "description": "Valida as credenciais da conta, cria uma sessao persistida e retorna access token e refresh token no corpo da resposta. O access token carrega o sessionId e deixa de autenticar quando a sessao e revogada.",
         "operationId": "mobileLogin",
         "parameters": [
           {
             "name": "User-Agent",
             "in": "header",
-            "description": "Identificador do client/dispositivo usado para registrar o refresh token.",
+            "description": "Identificador do client/dispositivo usado para registrar a sessao e o refresh token.",
             "required": false,
             "schema": {
               "type": "string"
             },
             "example": "YourAuthMobile/1.0"
+          },
+          {
+            "name": "X-End-User-IP",
+            "in": "header",
+            "description": "IP real da conta autenticada.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "203.0.113.10"
+          },
+          {
+            "name": "X-Device-Name",
+            "in": "header",
+            "description": "Nome amigavel do dispositivo usado na sessao.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "YourAuthMobile iOS"
           }
         ],
         "requestBody": {
@@ -2402,18 +2879,38 @@
           "Account Authentication"
         ],
         "summary": "Autentica uma conta proprietaria no fluxo web",
-        "description": "Valida as credenciais da conta, cria uma sessao e define cookies HTTP-only de access token e refresh token.",
+        "description": "Valida as credenciais da conta, cria uma sessao persistida e define cookies HTTP-only de access token e refresh token. O access token carrega o sessionId e deixa de autenticar quando a sessao e revogada.",
         "operationId": "login_1",
         "parameters": [
           {
             "name": "User-Agent",
             "in": "header",
-            "description": "Identificador do client/dispositivo usado para registrar o refresh token.",
+            "description": "Identificador do client/dispositivo usado para registrar a sessao e o refresh token.",
             "required": false,
             "schema": {
               "type": "string"
             },
             "example": "Mozilla/5.0"
+          },
+          {
+            "name": "X-End-User-IP",
+            "in": "header",
+            "description": "IP real da conta autenticada.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "203.0.113.10"
+          },
+          {
+            "name": "X-Device-Name",
+            "in": "header",
+            "description": "Nome amigavel do dispositivo usado na sessao.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Chrome macOS"
           }
         ],
         "requestBody": {
@@ -2477,6 +2974,67 @@
             }
           }
         }
+      }
+    },
+    "/accounts": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Busca uma conta pelo e-mail",
+        "description": "Retorna dados basicos de uma conta proprietaria encontrada pelo e-mail.",
+        "operationId": "findAccountByEmail",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conta encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountBasicResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria ou token de conta invalido.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta nao encontrada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
       }
     },
     "/accounts/create": {
@@ -3162,6 +3720,117 @@
           }
         ]
       }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Encerra a sessao web da conta",
+        "description": "Usa o cookie refresh_token para revogar a sessao persistida da conta, invalidando refresh tokens da sessao e access tokens emitidos com o mesmo sessionId.",
+        "operationId": "logoutAccountSession",
+        "parameters": [
+          {
+            "name": "refresh_token",
+            "in": "cookie",
+            "description": "Refresh token HTTP-only recebido no login web.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessao encerrada e cookies limpos.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Limpa os cookies HTTP-only access-token e refresh_token.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "*/*": {}
+            }
+          },
+          "400": {
+            "description": "Cookie refresh_token ausente.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "refreshTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/auth/mobile/logout": {
+      "post": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Encerra a sessao mobile da conta",
+        "description": "Usa o refresh token enviado no corpo da requisicao para revogar a sessao persistida da conta, invalidando refresh tokens da sessao e access tokens emitidos com o mesmo sessionId.",
+        "operationId": "logoutMobileAccountSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRefreshRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Sessao encerrada.",
+            "content": {
+              "*/*": {}
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalido, expirado ou reutilizado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3290,6 +3959,76 @@
           "joinedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "SendInviteDTO": {
+        "type": "object",
+        "properties": {
+          "recipientAccountId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "DEVELOPER",
+              "VIEWER"
+            ]
+          }
+        },
+        "required": [
+          "recipientAccountId",
+          "role"
+        ]
+      },
+      "InviteResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "senderAccountId": {
+            "type": "string"
+          },
+          "senderAccountEmail": {
+            "type": "string"
+          },
+          "recipientAccountId": {
+            "type": "string"
+          },
+          "recipientAccountEmail": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "DEVELOPER",
+              "VIEWER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REFUSED"
+            ]
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "projectDescription": {
+            "type": "string"
           }
         }
       },
@@ -4058,21 +4797,34 @@
       },
       "UpdatePlanLimitsDTO": {
         "type": "object",
+        "description": "Campos omitidos nao alteram o limite atual. Campos enviados como null deixam o limite ilimitado.",
         "properties": {
           "MAX_PROJECTS": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Limite maximo de projetos."
           },
           "MAX_USERS_TOTAL": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Limite maximo de usuarios totais."
           },
           "MAX_ACTIVE_SESSIONS_TOTAL": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Limite maximo de sessoes ativas totais."
           }
         }
       },
@@ -4405,6 +5157,33 @@
           }
         }
       },
+      "PageResultInviteResponseDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InviteResponseDTO"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PageResultUserSessionResponseDTO": {
         "type": "object",
         "properties": {
@@ -4490,7 +5269,7 @@
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "description": "JWT de conta proprietaria enviado no header Authorization: Bearer <token>.",
+        "description": "JWT de conta proprietaria enviado no header Authorization: Bearer <token>. O token carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.",
         "scheme": "bearer",
         "bearerFormat": "JWT"
       },
@@ -4502,13 +5281,13 @@
       },
       "accessTokenCookie": {
         "type": "apiKey",
-        "description": "Cookie HTTP-only usado pelo fluxo web para autenticacao.",
+        "description": "Cookie HTTP-only usado pelo fluxo web para autenticacao. O JWT carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.",
         "name": "access-token",
         "in": "cookie"
       },
       "refreshTokenCookie": {
         "type": "apiKey",
-        "description": "Cookie HTTP-only usado pelo fluxo web para renovar a sessao.",
+        "description": "Cookie HTTP-only usado pelo fluxo web para renovar ou encerrar a sessao persistida.",
         "name": "refresh_token",
         "in": "cookie"
       }

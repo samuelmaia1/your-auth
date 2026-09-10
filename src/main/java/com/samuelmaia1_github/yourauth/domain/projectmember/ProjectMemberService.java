@@ -19,16 +19,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class ProjectMemberService {
-    private static final List<ProjectMemberRole> PROJECT_MEMBER_MANAGEMENT_ROLES = List.of(
-            ProjectMemberRole.OWNER,
-            ProjectMemberRole.ADMIN
-    );
-
     private final ProjectMemberDetailsRepository detailsRepository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
@@ -91,8 +84,6 @@ public class ProjectMemberService {
         ensureProjectExists(projectId);
 
         ProjectMember requester = findRequesterOrThrow(projectId, authenticatedAccountId);
-        ensureCanDeleteMembers(requester);
-
         ProjectMember target = findMemberOrThrow(projectId, targetAccountId);
         ensureCanDeleteTarget(requester, target);
 
@@ -121,22 +112,19 @@ public class ProjectMemberService {
                 .orElseThrow(ProjectAccessDeniedException::new);
     }
 
-    private void ensureCanDeleteMembers(ProjectMember requester) {
-        if (!PROJECT_MEMBER_MANAGEMENT_ROLES.contains(requester.getRole())) {
-            throw new ProjectAccessDeniedException();
-        }
-    }
-
     private void ensureCanDeleteTarget(ProjectMember requester, ProjectMember target) {
-        if (ProjectMemberRole.OWNER.equals(target.getRole())) {
-            throw new ProjectAccessDeniedException("O owner do projeto não pode ser removido dos membros.");
+        if (ProjectMemberRole.OWNER.equals(requester.getRole())) {
+            return;
         }
 
-        if (
-                ProjectMemberRole.ADMIN.equals(target.getRole())
-                        && !ProjectMemberRole.OWNER.equals(requester.getRole())
-        ) {
+        if (ProjectMemberRole.ADMIN.equals(requester.getRole()) && !ProjectMemberRole.ADMIN.equals(target.getRole())) {
+            return;
+        }
+
+        if (ProjectMemberRole.ADMIN.equals(target.getRole())) {
             throw new ProjectAccessDeniedException("Apenas o owner pode deletar um membro admin.");
         }
+
+        throw new ProjectAccessDeniedException("A conta autenticada não tem permissão para remover este membro.");
     }
 }

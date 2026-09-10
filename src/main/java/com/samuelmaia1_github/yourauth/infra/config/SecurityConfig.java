@@ -69,8 +69,15 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.GET, "/plans").permitAll()
                             .requestMatchers(HttpMethod.PUT, "/plans/*/limits").permitAll()
                             .requestMatchers(HttpMethod.POST, "/accounts/create").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
+                            .requestMatchers(
+                                    HttpMethod.POST,
+                                    "/auth/login",
+                                    "/auth/mobile/login",
+                                    "/auth/refresh",
+                                    "/auth/mobile/refresh",
+                                    "/auth/logout",
+                                    "/auth/mobile/logout"
+                            ).permitAll()
                             .requestMatchers(HttpMethod.POST, "/users/refresh", "/users/logout")
                             .access(SecurityConfig::hasProjectApiKey)
                             .anyRequest().authenticated()

@@ -40,8 +40,11 @@ public class PlanPresentationMapper {
     public static PlanLimitSettings toLimitSettings(UpdatePlanLimitsDTO dto) {
         return new PlanLimitSettings(
                 dto.maxProjects(),
+                dto.maxProjectsProvided(),
                 dto.maxUsersTotal(),
-                dto.maxActiveSessionsTotal()
+                dto.maxUsersTotalProvided(),
+                dto.maxActiveSessionsTotal(),
+                dto.maxActiveSessionsTotalProvided()
         );
     }
 

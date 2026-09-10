@@ -42,7 +42,10 @@ public class PlanController {
     }
 
     @PutMapping("/{code}/limits")
-    @Operation(summary = "Atualiza os limites de uso de um plano")
+    @Operation(
+            summary = "Atualiza os limites de uso de um plano",
+            description = "Atualiza apenas os limites enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual; campos enviados como null removem o limite numerico."
+    )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
