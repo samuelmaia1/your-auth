@@ -22,7 +22,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:project_member_repository_test")
+@SpringBootTest(properties = {
+        "spring.datasource.url=jdbc:h2:mem:project_member_repository_test",
+        "spring.cache.type=simple",
+        "spring.data.redis.host=localhost",
+        "spring.data.redis.port=6379",
+        "spring.data.redis.password="
+})
 @AutoConfigureMockMvc
 class ProjectMemberRepositoryIntegrationTest {
     @Autowired
@@ -113,12 +119,13 @@ class ProjectMemberRepositoryIntegrationTest {
                 "ADMIN",
                 LocalDateTime.parse("2026-02-02T10:00:00")
         );
+        insertAccountSession("http-owner-session", "http-owner");
 
         String token = tokenService.generateToken(Account.builder()
                 .id("http-owner")
                 .email("http-owner@example.com")
                 .CPF(new CPF("22233344455"))
-                .build());
+                .build(), "http-owner-session");
 
         mockMvc.perform(get("/projects/http-project/members")
                         .header("Authorization", "Bearer " + token)
@@ -152,6 +159,16 @@ class ProjectMemberRepositoryIntegrationTest {
                     last_name
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """, id, email, "hashed-password", cpf, name, lastName);
+    }
+
+    private void insertAccountSession(String id, String accountId) {
+        jdbcTemplate.update("""
+                INSERT INTO account_sessions (
+                    id,
+                    account_id,
+                    last_used_at
+                ) VALUES (?, ?, CURRENT_TIMESTAMP)
+                """, id, accountId);
     }
 
     private void insertProject(String id, String ownerAccountId) {

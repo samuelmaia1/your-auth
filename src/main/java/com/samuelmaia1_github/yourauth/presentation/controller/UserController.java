@@ -97,7 +97,7 @@ public class UserController {
     @PostMapping("/login")
     @Operation(
             summary = "Autentica um usuario final via API key",
-            description = "Valida credenciais no projeto associado a API key e define cookies HTTP-only de access token e refresh token.",
+            description = "Valida credenciais no projeto associado a API key e define cookies HTTP-only de access token e refresh token. O access token carrega o sessionId da sessao persistida.",
             security = @SecurityRequirement(name = "projectApiKey")
     )
     @ApiResponses({
@@ -190,7 +190,7 @@ public class UserController {
     @PostMapping("/refresh")
     @Operation(
             summary = "Renova a sessao web de um usuario final",
-            description = "Usa a API key do projeto e o cookie refresh_token para gerar novos tokens e redefinir cookies HTTP-only.",
+            description = "Usa a API key do projeto e o cookie refresh_token para validar a sessao persistida, gerar access token com sessionId e redefinir cookies HTTP-only.",
             security = {
                     @SecurityRequirement(name = "projectApiKey"),
                     @SecurityRequirement(name = "refreshTokenCookie")
@@ -261,7 +261,7 @@ public class UserController {
     @PostMapping("/logout")
     @Operation(
             summary = "Encerra a sessao web de um usuario final",
-            description = "Usa a API key do projeto e o cookie refresh_token para revogar a sessao e limpar os cookies.",
+            description = "Usa a API key do projeto e o cookie refresh_token para revogar a sessao, invalidar access tokens emitidos com o mesmo sessionId e limpar os cookies.",
             security = {
                     @SecurityRequirement(name = "projectApiKey"),
                     @SecurityRequirement(name = "refreshTokenCookie")

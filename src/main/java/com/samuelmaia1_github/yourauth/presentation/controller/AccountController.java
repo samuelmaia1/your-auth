@@ -10,6 +10,7 @@ import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
 import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscription;
 import com.samuelmaia1_github.yourauth.domain.subscription.AccountSubscriptionService;
+import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountBasicResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountSummaryResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountUsageResponseDTO;
@@ -44,6 +45,43 @@ public class AccountController {
     private final AccountSummaryService summaryService;
     private final AccountUsageService usageService;
     private final AccountSubscriptionService subscriptionService;
+
+    @GetMapping(params = "email")
+    @Operation(
+            summary = "Busca uma conta pelo e-mail",
+            description = "Retorna dados basicos de uma conta proprietaria encontrada pelo e-mail.",
+            security = {
+                    @SecurityRequirement(name = "bearerAuth"),
+                    @SecurityRequirement(name = "accessTokenCookie")
+            }
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Conta encontrada.",
+                    content = @Content(schema = @Schema(implementation = AccountBasicResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria ou token de conta invalido.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Conta nao encontrada.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<AccountBasicResponseDTO> findByEmail(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
+            @RequestParam String email
+    ) {
+        requireAuthenticatedAccount(authenticatedAccount);
+        Account account = service.findByEmail(email);
+
+        return ResponseEntity.ok(AccountPresentationMapper.toBasicResponseDTO(account));
+    }
 
     @GetMapping("/me")
     @Operation(

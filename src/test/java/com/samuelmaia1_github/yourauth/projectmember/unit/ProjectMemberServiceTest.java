@@ -122,6 +122,40 @@ class ProjectMemberServiceTest {
     }
 
     @Test
+    void shouldDeleteOwnerWhenAuthenticatedAccountIsOwner() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("owner-account-id", ProjectMemberRole.OWNER);
+        memberRepository.target = member("owner-account-id", ProjectMemberRole.OWNER);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        service.delete(PROJECT_ID, "owner-account-id", "owner-account-id");
+
+        assertThat(memberRepository.deletedProjectId).isEqualTo(PROJECT_ID);
+        assertThat(memberRepository.deletedAccountId).isEqualTo("owner-account-id");
+    }
+
+    @Test
+    void shouldDeleteOwnerWhenAuthenticatedAccountIsAdmin() {
+        RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
+        memberRepository.requester = member("admin-account-id", ProjectMemberRole.ADMIN);
+        memberRepository.target = member("owner-account-id", ProjectMemberRole.OWNER);
+        ProjectMemberService service = new ProjectMemberService(
+                new RecordingProjectMemberDetailsRepository(),
+                new StubProjectRepository(true),
+                memberRepository
+        );
+
+        service.delete(PROJECT_ID, "owner-account-id", "admin-account-id");
+
+        assertThat(memberRepository.deletedProjectId).isEqualTo(PROJECT_ID);
+        assertThat(memberRepository.deletedAccountId).isEqualTo("owner-account-id");
+    }
+
+    @Test
     void shouldDenyDeleteAdminWhenAuthenticatedAccountIsAdmin() {
         RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
         memberRepository.requester = member("admin-account-id", ProjectMemberRole.ADMIN);
@@ -157,19 +191,19 @@ class ProjectMemberServiceTest {
     }
 
     @Test
-    void shouldDenyDeleteOwnerMember() {
+    void shouldDenyDeleteWhenAuthenticatedAccountIsDeveloper() {
         RecordingProjectMemberRepository memberRepository = new RecordingProjectMemberRepository(true);
-        memberRepository.requester = member("owner-account-id", ProjectMemberRole.OWNER);
-        memberRepository.target = member("owner-account-id", ProjectMemberRole.OWNER);
+        memberRepository.requester = member("developer-account-id", ProjectMemberRole.DEVELOPER);
+        memberRepository.target = member("viewer-account-id", ProjectMemberRole.VIEWER);
         ProjectMemberService service = new ProjectMemberService(
                 new RecordingProjectMemberDetailsRepository(),
                 new StubProjectRepository(true),
                 memberRepository
         );
 
-        assertThatThrownBy(() -> service.delete(PROJECT_ID, "owner-account-id", "owner-account-id"))
+        assertThatThrownBy(() -> service.delete(PROJECT_ID, "viewer-account-id", "developer-account-id"))
                 .isInstanceOf(ProjectAccessDeniedException.class)
-                .hasMessage("O owner do projeto não pode ser removido dos membros.");
+                .hasMessage("A conta autenticada não tem permissão para remover este membro.");
 
         assertThat(memberRepository.deletedAccountId).isNull();
     }
