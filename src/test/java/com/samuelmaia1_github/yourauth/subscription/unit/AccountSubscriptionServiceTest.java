@@ -114,8 +114,7 @@ class AccountSubscriptionServiceTest {
         private final List<Plan> plans = List.of(
                 plan("free", PlanCode.FREE),
                 plan("starter", PlanCode.STARTER),
-                plan("pro", PlanCode.PRO),
-                plan("business", PlanCode.BUSINESS)
+                plan("pro", PlanCode.PRO)
         );
 
         @Override

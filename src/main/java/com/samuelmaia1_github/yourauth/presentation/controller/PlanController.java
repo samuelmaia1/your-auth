@@ -29,7 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/plans")
 @RequiredArgsConstructor
-@Tag(name = "Plans", description = "Catalogo de planos disponiveis para contas proprietarias.")
+@Tag(name = "Plans", description = "Catálogo de planos disponíveis para contas proprietárias.")
 public class PlanController {
     private final PlanService service;
 
@@ -44,7 +44,7 @@ public class PlanController {
     @PutMapping("/{code}/limits")
     @Operation(
             summary = "Atualiza os limites de uso de um plano",
-            description = "Atualiza apenas os limites enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual; campos enviados como null removem o limite numerico."
+            description = "Atualiza apenas os limites enviados no corpo da requisição. Campos omitidos permanecem com o valor atual; campos enviados como null removem o limite numérico."
     )
     @ApiResponses({
             @ApiResponse(
@@ -54,12 +54,12 @@ public class PlanController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Corpo da requisicao invalido.",
+                    description = "Corpo da requisição inválido.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Plano nao encontrado.",
+                    description = "Plano não encontrado.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })

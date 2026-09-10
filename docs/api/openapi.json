@@ -46,7 +46,7 @@
     },
     {
       "name": "Plans",
-      "description": "Catalogo de planos disponiveis para contas proprietarias."
+      "description": "Catálogo de planos disponíveis para contas proprietárias."
     },
     {
       "name": "Account Authentication",
@@ -88,7 +88,7 @@
           "Plans"
         ],
         "summary": "Atualiza os limites de uso de um plano",
-        "description": "Atualiza apenas os limites enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual; campos enviados como null removem o limite numerico.",
+        "description": "Atualiza apenas os limites enviados no corpo da requisição. Campos omitidos permanecem com o valor atual; campos enviados como null removem o limite numérico.",
         "operationId": "updateLimits",
         "parameters": [
           {
@@ -100,8 +100,7 @@
               "enum": [
                 "FREE",
                 "STARTER",
-                "PRO",
-                "BUSINESS"
+                "PRO"
               ]
             }
           }
@@ -128,7 +127,7 @@
             }
           },
           "400": {
-            "description": "Corpo da requisicao invalido.",
+            "description": "Corpo da requisição inválido.",
             "content": {
               "*/*": {
                 "schema": {
@@ -138,7 +137,7 @@
             }
           },
           "404": {
-            "description": "Plano nao encontrado.",
+            "description": "Plano não encontrado.",
             "content": {
               "*/*": {
                 "schema": {
@@ -4679,8 +4678,7 @@
             "enum": [
               "FREE",
               "STARTER",
-              "PRO",
-              "BUSINESS"
+              "PRO"
             ]
           },
           "subscriptionStatus": {
@@ -4839,8 +4837,7 @@
             "enum": [
               "FREE",
               "STARTER",
-              "PRO",
-              "BUSINESS"
+              "PRO"
             ]
           },
           "name": {

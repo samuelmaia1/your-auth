@@ -30,12 +30,14 @@ class PlanControllerIntegrationTest {
     void shouldReturnActivePlansWithoutAuthentication() throws Exception {
         mockMvc.perform(get("/plans"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(4))
+                .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[0].code").value("FREE"))
                 .andExpect(jsonPath("$[1].code").value("STARTER"))
                 .andExpect(jsonPath("$[2].code").value("PRO"))
-                .andExpect(jsonPath("$[3].code").value("BUSINESS"))
-                .andExpect(jsonPath("$[0].limits.length()").value(3));
+                .andExpect(jsonPath("$[0].limits.length()").value(3))
+                .andExpect(jsonPath("$[0].features.length()").value(7))
+                .andExpect(jsonPath("$[1].features[?(@.code == 'TUDO_DO_FREE')].description").value(contains("Tudo do Free")))
+                .andExpect(jsonPath("$[2].features[?(@.code == 'TUDO_DO_STARTER')].description").value(contains("Tudo do Starter")));
     }
 
     @Test
