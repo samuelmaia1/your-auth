@@ -333,6 +333,10 @@ class UserAuthServiceTest {
         }
 
         @Override
+        public void revokeAllByProjectIdAndUserId(String projectId, String userId) {
+        }
+
+        @Override
         public long countByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId) {
             return 0;
         }

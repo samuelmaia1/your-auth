@@ -52,6 +52,11 @@ public class UserRefreshTokenRepositoryAdapter implements UserRefreshTokenReposi
     }
 
     @Override
+    public void revokeAllByProjectIdAndUserId(String projectId, String userId) {
+        repository.revokeAllByProjectIdAndUserId(projectId, userId);
+    }
+
+    @Override
     public void deleteById(String id) {
         repository.deleteById(id);
     }

@@ -62,8 +62,14 @@ public class ProjectMemberRepositoryAdapter implements ProjectMemberRepository, 
         repository.deleteAllByProjectId(projectId);
     }
 
+    @Override
+    public void deleteByProjectIdAndAccountId(String projectId, String accountId) {
+        repository.deleteByProjectIdAndAccountId(projectId, accountId);
+    }
+
     private ProjectMemberDetails toDetails(ProjectMemberDetailsProjection projection) {
         return new ProjectMemberDetails(
+                projection.accountId(),
                 projection.name(),
                 projection.lastName(),
                 projection.role(),

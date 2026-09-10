@@ -48,6 +48,10 @@ public class ProjectServiceTest {
             public Optional<PasswordConfig> findByProjectId(String projectId) {
                 return Optional.empty();
             }
+
+            @Override
+            public void deleteByProjectId(String projectId) {
+            }
         };
         ProjectService service = new ProjectService(
                 projectRepository,
@@ -82,6 +86,10 @@ public class ProjectServiceTest {
             @Override
             public Optional<PasswordConfig> findByProjectId(String projectId) {
                 return Optional.empty();
+            }
+
+            @Override
+            public void deleteByProjectId(String projectId) {
             }
         };
         ProjectService service = new ProjectService(
@@ -220,6 +228,10 @@ public class ProjectServiceTest {
             @Override
             public Optional<PasswordConfig> findByProjectId(String projectId) {
                 return Optional.empty();
+            }
+
+            @Override
+            public void deleteByProjectId(String projectId) {
             }
         };
         return new ProjectService(
@@ -401,6 +413,10 @@ public class ProjectServiceTest {
         @Override
         public void deleteAllByProjectId(String projectId) {
             deletedProjectId = projectId;
+        }
+
+        @Override
+        public void deleteByProjectIdAndAccountId(String projectId, String accountId) {
         }
     }
 

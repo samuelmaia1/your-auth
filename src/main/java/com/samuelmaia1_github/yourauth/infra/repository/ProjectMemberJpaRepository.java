@@ -25,6 +25,7 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMemberE
     @Query(
             value = """
                     select new com.samuelmaia1_github.yourauth.infra.repository.ProjectMemberDetailsProjection(
+                        projectMember.accountId,
                         account.name,
                         account.lastName,
                         projectMember.role,
@@ -48,4 +49,6 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMemberE
     );
 
     void deleteAllByProjectId(String projectId);
+
+    void deleteByProjectIdAndAccountId(String projectId, String accountId);
 }

@@ -279,6 +279,7 @@ class CacheConfigTest {
         PageResult<?> page = roundTrip(
                 new PageResult<>(
                         List.of(new ProjectMemberDetails(
+                                "account-id",
                                 "Samuel",
                                 "Maia",
                                 ProjectMemberRole.OWNER,

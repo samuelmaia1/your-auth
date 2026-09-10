@@ -24,4 +24,17 @@ public interface UserRefreshTokenJpaRepository extends JpaRepository<UserRefresh
           AND revoked_at IS NULL
         """, nativeQuery = true)
     int revokeSession(@Param("sessionId") String sessionId);
+
+    @Modifying
+    @Query(value = """
+        UPDATE user_refresh_tokens
+        SET revoked_at = CURRENT_TIMESTAMP
+        WHERE project_id = :projectId
+          AND user_id = :userId
+          AND revoked_at IS NULL
+        """, nativeQuery = true)
+    int revokeAllByProjectIdAndUserId(
+            @Param("projectId") String projectId,
+            @Param("userId") String userId
+    );
 }

@@ -75,6 +75,9 @@ class ProjectMemberRepositoryIntegrationTest {
         assertThat(members.totalElements()).isEqualTo(3);
         assertThat(members.totalPages()).isEqualTo(2);
         assertThat(members.content())
+                .extracting(ProjectMemberDetails::accountId)
+                .containsExactly("admin-account", "viewer-account");
+        assertThat(members.content())
                 .extracting(ProjectMemberDetails::name)
                 .containsExactly("Bruno", "Carla");
         assertThat(members.content())
@@ -123,10 +126,12 @@ class ProjectMemberRepositoryIntegrationTest {
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].accountId").value("http-admin"))
                 .andExpect(jsonPath("$.content[0].name").value("Http"))
                 .andExpect(jsonPath("$.content[0].lastName").value("Admin"))
                 .andExpect(jsonPath("$.content[0].role").value("ADMIN"))
                 .andExpect(jsonPath("$.content[0].joinedAt").value("2026-02-02T10:00:00"))
+                .andExpect(jsonPath("$.content[1].accountId").value("http-owner"))
                 .andExpect(jsonPath("$.content[1].name").value("Http"))
                 .andExpect(jsonPath("$.content[1].lastName").value("Owner"))
                 .andExpect(jsonPath("$.content[1].role").value("OWNER"))

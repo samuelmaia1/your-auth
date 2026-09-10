@@ -17,4 +17,6 @@ public interface ProjectMemberRepository {
     );
 
     void deleteAllByProjectId(String projectId);
+
+    void deleteByProjectIdAndAccountId(String projectId, String accountId);
 }

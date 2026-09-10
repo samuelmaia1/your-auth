@@ -385,6 +385,154 @@
         ]
       }
     },
+    "/projects/{projectId}/users/{userId}/sessions/{sessionId}": {
+      "delete": {
+        "tags": [
+          "Project Users"
+        ],
+        "summary": "Revoga uma sessao de um usuario final",
+        "operationId": "revokeSession",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessao revogada."
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para revogar sessoes neste projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto, usuario ou sessao nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/users/{userId}/sessions": {
+      "delete": {
+        "tags": [
+          "Project Users"
+        ],
+        "summary": "Revoga todas as sessoes de um usuario final",
+        "operationId": "revokeAllSessions",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessoes revogadas."
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para revogar sessoes neste projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou usuario nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
     "/projects/{projectId}/auth-config": {
       "get": {
         "tags": [
@@ -1433,6 +1581,76 @@
           },
           "404": {
             "description": "Projeto nao encontrado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/projects/{projectId}/members/{accountId}": {
+      "delete": {
+        "tags": [
+          "Project Members"
+        ],
+        "summary": "Remove um membro de um projeto",
+        "operationId": "deleteMember",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Membro removido."
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para remover este membro.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou membro nao encontrados.",
             "content": {
               "*/*": {
                 "schema": {
@@ -2729,16 +2947,16 @@
         ]
       }
     },
-    "/projects/{id}/password-config": {
+    "/projects/{projectId}/password-config": {
       "get": {
         "tags": [
-          "Projects"
+          "Project Password Config"
         ],
         "summary": "Busca a configuracao de senha de um projeto",
-        "operationId": "getPasswordConfigById",
+        "operationId": "getPasswordConfig",
         "parameters": [
           {
-            "name": "id",
+            "name": "projectId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2769,6 +2987,153 @@
           },
           "403": {
             "description": "Conta sem acesso ao projeto.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou configuracao nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Project Password Config"
+        ],
+        "summary": "Atualiza a configuracao de senha de um projeto",
+        "operationId": "updatePasswordConfig",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordConfigDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Configuracao atualizada.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordConfigDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para alterar a configuracao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Projeto ou configuracao nao encontrados.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Project Password Config"
+        ],
+        "summary": "Remove a configuracao de senha de um projeto",
+        "operationId": "deletePasswordConfig",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Configuracao removida."
+          },
+          "401": {
+            "description": "Autenticacao obrigatoria.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Conta sem permissao para remover a configuracao.",
             "content": {
               "*/*": {
                 "schema": {
@@ -2904,6 +3269,9 @@
       "ProjectMemberResponseDTO": {
         "type": "object",
         "properties": {
+          "accountId": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },

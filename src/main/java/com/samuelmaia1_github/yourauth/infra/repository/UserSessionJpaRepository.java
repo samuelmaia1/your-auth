@@ -63,5 +63,18 @@ public interface UserSessionJpaRepository extends JpaRepository<UserSessionEntit
         """, nativeQuery = true)
     int revokeById(@Param("id") String id);
 
+    @Modifying
+    @Query(value = """
+        UPDATE user_sessions
+        SET revoked_at = CURRENT_TIMESTAMP
+        WHERE project_id = :projectId
+          AND user_id = :userId
+          AND revoked_at IS NULL
+        """, nativeQuery = true)
+    int revokeAllByProjectIdAndUserId(
+            @Param("projectId") String projectId,
+            @Param("userId") String userId
+    );
+
     long countByProjectIdAndUserIdAndRevokedAtIsNull(String projectId, String userId);
 }

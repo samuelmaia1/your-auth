@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -73,5 +74,36 @@ public class ProjectMemberController {
         );
 
         return ResponseEntity.ok(ProjectMemberPresentationMapper.toResponseDTO(members));
+    }
+
+    @DeleteMapping("/{accountId}")
+    @Operation(summary = "Remove um membro de um projeto")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Membro removido."),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticacao obrigatoria.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Conta sem permissao para remover este membro.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Projeto ou membro nao encontrados.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> delete(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
+            @PathVariable String projectId,
+            @PathVariable String accountId
+    ) {
+        service.delete(projectId, accountId, authenticatedAccount.id());
+
+        return ResponseEntity.noContent().build();
     }
 }

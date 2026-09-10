@@ -5,10 +5,8 @@ import com.samuelmaia1_github.yourauth.domain.project.Project;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectService;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
-import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigService;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.shared.Pagination;
-import com.samuelmaia1_github.yourauth.presentation.dto.passwordconfig.PasswordConfigDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.CreateProjectDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.ProjectResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.UpdateProjectDTO;
@@ -47,7 +45,6 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "accessTokenCookie")
 public class ProjectController {
     private final ProjectService service;
-    private final PasswordConfigService passwordConfigService;
 
     @PostMapping("/create")
     @Operation(summary = "Cria um projeto")
@@ -126,41 +123,6 @@ public class ProjectController {
         Project project = service.findById(id, authenticatedAccount.id());
 
         return ResponseEntity.ok(ProjectPresentationMapper.toResponseDTO(project));
-    }
-
-    @GetMapping("/{id}/password-config")
-    @Operation(summary = "Busca a configuracao de senha de um projeto")
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Configuracao encontrada.",
-                    content = @Content(schema = @Schema(implementation = PasswordConfigDTO.class))
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Autenticacao obrigatoria.",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Conta sem acesso ao projeto.",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Projeto ou configuracao nao encontrados.",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    public ResponseEntity<PasswordConfigDTO> getPasswordConfigById(
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal AuthenticatedAccount authenticatedAccount,
-            @PathVariable String id
-    ) {
-        PasswordConfig config = passwordConfigService.findByProjectId(id, authenticatedAccount.id());
-
-        return ResponseEntity
-                .ok(PasswordConfigPresentationMapper.toDto(config));
     }
 
     @GetMapping

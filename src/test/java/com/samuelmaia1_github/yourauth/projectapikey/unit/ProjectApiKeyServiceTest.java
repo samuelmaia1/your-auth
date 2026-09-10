@@ -274,5 +274,9 @@ class ProjectApiKeyServiceTest {
         @Override
         public void deleteAllByProjectId(String projectId) {
         }
+
+        @Override
+        public void deleteByProjectIdAndAccountId(String projectId, String accountId) {
+        }
     }
 }
