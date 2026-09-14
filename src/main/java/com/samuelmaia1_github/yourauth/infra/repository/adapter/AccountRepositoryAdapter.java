@@ -32,6 +32,11 @@ public class AccountRepositoryAdapter implements AccountRepository {
     }
 
     @Override
+    public Optional<Account> findByEmailIgnoreCase(String email) {
+        return repository.findByEmailIgnoreCase(email).map(AccountMapper::toDomain);
+    }
+
+    @Override
     public Optional<Account> findByCPF(CPF cpf) {
         return repository.findByCPF(cpf).map(AccountMapper::toDomain);
     }

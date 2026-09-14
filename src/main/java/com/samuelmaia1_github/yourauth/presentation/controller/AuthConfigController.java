@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigService;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigUpdate;
 import com.samuelmaia1_github.yourauth.presentation.dto.authconfig.AuthConfigDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.mapper.AuthConfigPresentationMapper;
@@ -69,7 +70,10 @@ public class AuthConfigController {
     }
 
     @PutMapping
-    @Operation(summary = "Atualiza a configuracao de autenticacao de um projeto")
+    @Operation(
+            summary = "Atualiza a configuracao de autenticacao de um projeto",
+            description = "Atualiza apenas os campos enviados no corpo da requisição. Campos omitidos permanecem com o valor atual."
+    )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -103,7 +107,7 @@ public class AuthConfigController {
             @PathVariable String projectId,
             @Valid @RequestBody AuthConfigDTO dto
     ) {
-        AuthConfig config = AuthConfigPresentationMapper.toDomain(dto);
+        AuthConfigUpdate config = AuthConfigPresentationMapper.toUpdate(dto);
         AuthConfig updatedConfig = service.update(projectId, config, authenticatedAccount.id());
 
         return ResponseEntity.ok(AuthConfigPresentationMapper.toDto(updatedConfig));

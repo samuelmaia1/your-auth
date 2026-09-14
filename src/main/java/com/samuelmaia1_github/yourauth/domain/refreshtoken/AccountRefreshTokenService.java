@@ -42,11 +42,12 @@ public class AccountRefreshTokenService {
 
     public TokenDTO createAccountRefreshToken(String accountId, String sessionId, String userAgent) {
         String raw = generator.generate();
+        String hash = hasher.hash(raw);
 
         AccountRefreshToken token = AccountRefreshToken
                 .builder()
                 .accountId(accountId)
-                .hash(hasher.hash(raw))
+                .hash(hash)
                 .expiresAt(generateExpirationDate())
                 .sessionId(sessionId)
                 .userAgent(userAgent)
@@ -59,7 +60,8 @@ public class AccountRefreshTokenService {
 
     @Transactional
     public AccountRefreshResponseDTO refresh(String currentRawToken) {
-        AccountRefreshToken currentToken = getToken(hash(currentRawToken));
+        String currentHash = hash(currentRawToken);
+        AccountRefreshToken currentToken = getToken(currentHash);
 
         validateToken(currentToken);
         validateSession(currentToken);
@@ -67,13 +69,14 @@ public class AccountRefreshTokenService {
         currentToken.revoke();
 
         String newRaw = generator.generate();
+        String newHash = hasher.hash(newRaw);
 
         AccountRefreshToken newToken = AccountRefreshToken
                 .builder()
                 .accountId(currentToken.getAccountId())
                 .userAgent(currentToken.getUserAgent())
                 .expiresAt(generateExpirationDate())
-                .hash(hasher.hash(newRaw))
+                .hash(newHash)
                 .sessionId(currentToken.getSessionId())
                 .build();
 
@@ -90,8 +93,9 @@ public class AccountRefreshTokenService {
     public AccountRefreshToken getToken(String hash) {
         Optional<AccountRefreshToken> optionalRefreshToken = repository.findByHash(hash);
 
-        if (optionalRefreshToken.isEmpty())
+        if (optionalRefreshToken.isEmpty()) {
             throw new InvalidTokenException("Refresh token não existente");
+        }
 
         return optionalRefreshToken.get();
     }
@@ -116,8 +120,9 @@ public class AccountRefreshTokenService {
             throw new RefreshTokenReuseException("Refresh token reutilizado. A sessão foi encerrada.");
         }
 
-        if (token.isExpired())
+        if (token.isExpired()) {
             throw new ExpiredRefreshTokenException("Refresh token expirado ou revogado");
+        }
     }
 
     private void validateSession(AccountRefreshToken token) {

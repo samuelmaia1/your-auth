@@ -543,6 +543,11 @@ class InviteServiceTest {
         }
 
         @Override
+        public Optional<Account> findByEmailIgnoreCase(String email) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<Account> findByCPF(CPF cpf) {
             return Optional.empty();
         }

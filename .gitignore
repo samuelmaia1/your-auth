@@ -32,6 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
+/src/main/resources/application-local.properties
+
 /.local-data
 /.local-data/your-auth.mv.db
 /.local-data/your-auth.trace.db

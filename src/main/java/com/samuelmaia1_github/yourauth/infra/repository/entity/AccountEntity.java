@@ -26,23 +26,26 @@ public class AccountEntity {
     @Column(nullable = false, updatable = false)
     private String id;
 
-    @Column(nullable = false)
+    @Column
     private String name;
 
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name")
     private String lastName;
 
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "avatar_url", length = 2048)
+    private String avatarUrl;
+
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "cep", column = @Column(name = "address_postal_code", nullable = false)),
-            @AttributeOverride(name = "street", column = @Column(name = "address_street", nullable = false)),
-            @AttributeOverride(name = "neighborhood", column = @Column(name = "address_neighborhood", nullable = false)),
-            @AttributeOverride(name = "city", column = @Column(name = "address_city", nullable = false)),
-            @AttributeOverride(name = "state", column = @Column(name = "address_state", nullable = false)),
-            @AttributeOverride(name = "number", column = @Column(name = "address_number", nullable = false))
+            @AttributeOverride(name = "cep", column = @Column(name = "address_postal_code")),
+            @AttributeOverride(name = "street", column = @Column(name = "address_street")),
+            @AttributeOverride(name = "neighborhood", column = @Column(name = "address_neighborhood")),
+            @AttributeOverride(name = "city", column = @Column(name = "address_city")),
+            @AttributeOverride(name = "state", column = @Column(name = "address_state")),
+            @AttributeOverride(name = "number", column = @Column(name = "address_number"))
     })
     private Address address;
 
@@ -55,16 +58,16 @@ public class AccountEntity {
     private LocalDateTime updatedAt;
 
     @Convert(converter = CPFConverter.class)
-    @Column(nullable = false, unique = true, length = 11)
+    @Column(unique = true, length = 11)
     private CPF CPF;
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "ddd", column = @Column(name = "phone_ddd", nullable = false)),
-            @AttributeOverride(name = "number", column = @Column(name = "phone_number", nullable = false))
+            @AttributeOverride(name = "ddd", column = @Column(name = "phone_ddd")),
+            @AttributeOverride(name = "number", column = @Column(name = "phone_number"))
     })
     private Phone phone;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 }

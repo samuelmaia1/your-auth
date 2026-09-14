@@ -9,6 +9,7 @@ import com.samuelmaia1_github.yourauth.domain.project.ProjectPolicy;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectRepository;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectService;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectStatus;
+import com.samuelmaia1_github.yourauth.domain.project.ProjectUpdate;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectAccessDeniedException;
@@ -165,6 +166,41 @@ public class ProjectServiceTest {
     }
 
     @Test
+    void shouldUpdateOnlyProvidedProjectFields() {
+        RecordingProjectRepository projectRepository = new RecordingProjectRepository(Optional.of(savedProject()));
+        RecordingProjectMemberRepository projectMemberRepository = new RecordingProjectMemberRepository();
+        projectMemberRepository.canManage = true;
+        ProjectService service = serviceWith(
+                projectRepository,
+                projectMemberRepository,
+                new RecordingProjectPolicy()
+        );
+
+        Project updatedProject = service.update(
+                "project-id",
+                new ProjectUpdate(
+                        null,
+                        false,
+                        null,
+                        true,
+                        null,
+                        false,
+                        null,
+                        false,
+                        null,
+                        false
+                ),
+                "admin-account-id"
+        );
+
+        assertThat(updatedProject.getName()).isEqualTo("My Project");
+        assertThat(updatedProject.getDescription()).isNull();
+        assertThat(updatedProject.getStatus()).isEqualTo(ProjectStatus.ACTIVE);
+        assertThat(updatedProject.getEnvironment()).isEqualTo(ProjectEnvironment.DEVELOPMENT);
+        assertThat(updatedProject.getTokenAudience()).isEqualTo("my-project");
+    }
+
+    @Test
     void shouldDenyUpdateProjectWhenAuthenticatedAccountCannotManageProject() {
         RecordingProjectRepository projectRepository = new RecordingProjectRepository(Optional.of(savedProject()));
         RecordingProjectMemberRepository projectMemberRepository = new RecordingProjectMemberRepository();
@@ -283,14 +319,19 @@ public class ProjectServiceTest {
                 .build();
     }
 
-    private Project updateProject() {
-        return Project.builder()
-                .name("Updated Project")
-                .description("Updated project description")
-                .status(ProjectStatus.SUSPENDED)
-                .environment(ProjectEnvironment.PRODUCTION)
-                .tokenAudience("updated-project")
-                .build();
+    private ProjectUpdate updateProject() {
+        return new ProjectUpdate(
+                "Updated Project",
+                true,
+                "Updated project description",
+                true,
+                ProjectStatus.SUSPENDED,
+                true,
+                ProjectEnvironment.PRODUCTION,
+                true,
+                "updated-project",
+                true
+        );
     }
 
     private static class RecordingProjectPolicy extends ProjectPolicy {
@@ -439,6 +480,11 @@ public class ProjectServiceTest {
 
         @Override
         public Optional<Account> findByEmail(String email) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Account> findByEmailIgnoreCase(String email) {
             return Optional.empty();
         }
 

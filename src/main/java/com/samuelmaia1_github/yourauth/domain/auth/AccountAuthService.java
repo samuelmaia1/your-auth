@@ -38,10 +38,20 @@ public class AccountAuthService {
     public AccountLoginSessionDTO login(LoginDTO credentials, String ipAddress, String userAgent, String deviceName) {
         Account account = findAccount(credentials);
 
-        if (!encoder.matches(credentials.password(), account.getPassword())) {
+        if (account.getPassword() == null || !encoder.matches(credentials.password(), account.getPassword())) {
             throw new InvalidCredentialsException("Credenciais inválidas.");
         }
 
+        return createAuthenticatedSession(account, ipAddress, userAgent, deviceName);
+    }
+
+    @Transactional
+    public AccountLoginSessionDTO createAuthenticatedSession(
+            Account account,
+            String ipAddress,
+            String userAgent,
+            String deviceName
+    ) {
         AccountSession session = AccountSession
                 .builder()
                 .accountId(account.getId())
@@ -59,9 +69,11 @@ public class AccountAuthService {
                 userAgent
         );
 
+        TokenDTO accessToken = buildAccessToken(account, savedSession.getId());
+
         return new AccountLoginSessionDTO(
                 AccountPresentationMapper.toResponseDTO(account),
-                buildAccessToken(account, savedSession.getId()),
+                accessToken,
                 refreshToken
         );
     }
@@ -76,10 +88,12 @@ public class AccountAuthService {
                 .orElseThrow(() -> new AccountNotFoundException("Conta não encontrada"));
 
         session.refresh();
-        accountSessionRepository.save(session);
+        AccountSession savedSession = accountSessionRepository.save(session);
+
+        TokenDTO accessToken = buildAccessToken(account, session.getId());
 
         return new AccountSessionTokensDTO(
-                buildAccessToken(account, session.getId()),
+                accessToken,
                 refreshResponse.refreshToken()
         );
     }
@@ -114,7 +128,10 @@ public class AccountAuthService {
             throw new InvalidTokenException("Sessão inválida ou expirada.");
         }
 
-        if (!Objects.equals(accountId, session.getAccountId()) || !session.isValid()) {
+        boolean sameAccount = Objects.equals(accountId, session.getAccountId());
+        boolean validSession = session.isValid();
+
+        if (!sameAccount || !validSession) {
             accountRefreshTokenService.revokeSession(sessionId);
 
             throw new InvalidTokenException("Sessão inválida ou expirada.");

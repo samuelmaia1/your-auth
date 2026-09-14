@@ -230,6 +230,7 @@
           "Project Users"
         ],
         "summary": "Atualiza um usuario final",
+        "description": "Atualiza apenas os campos enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual.",
         "operationId": "update",
         "parameters": [
           {
@@ -610,6 +611,7 @@
           "Project Auth Config"
         ],
         "summary": "Atualiza a configuracao de autenticacao de um projeto",
+        "description": "Atualiza apenas os campos enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual.",
         "operationId": "update_1",
         "parameters": [
           {
@@ -766,6 +768,7 @@
           "Projects"
         ],
         "summary": "Atualiza um projeto",
+        "description": "Atualiza apenas os campos enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual.",
         "operationId": "update_2",
         "parameters": [
           {
@@ -2975,6 +2978,109 @@
         }
       }
     },
+    "/auth/social/exchange": {
+      "post": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Troca codigo temporario de login social por sessao web",
+        "description": "Valida e consome atomicamente o codigo temporario emitido apos OAuth2 com Google ou GitHub, cria uma sessao proprietaria do Your Auth e define cookies HTTP-only de access token e refresh token. Tokens do provedor social nunca sao retornados.",
+        "operationId": "exchangeSocialLoginCode",
+        "parameters": [
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identificador do client/dispositivo usado para registrar a sessao e o refresh token.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Mozilla/5.0"
+          },
+          {
+            "name": "X-End-User-IP",
+            "in": "header",
+            "description": "IP real da conta autenticada.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "203.0.113.10"
+          },
+          {
+            "name": "X-Device-Name",
+            "in": "header",
+            "description": "Nome amigavel do dispositivo usado na sessao.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Chrome macOS"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SocialLoginExchangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Codigo social trocado por sessao proprietaria. Os cookies access-token e refresh_token sao enviados no header Set-Cookie.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Define os cookies HTTP-only access-token e refresh_token.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisicao invalido ou erro de validacao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Codigo inexistente, expirado ou ja consumido. A mensagem de erro estavel e SOCIAL_CODE_INVALID.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao gerar tokens da sessao.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/accounts": {
       "get": {
         "tags": [
@@ -3577,6 +3683,7 @@
           "Project Password Config"
         ],
         "summary": "Atualiza a configuracao de senha de um projeto",
+        "description": "Atualiza apenas os campos enviados no corpo da requisicao. Campos omitidos permanecem com o valor atual.",
         "operationId": "updatePasswordConfig",
         "parameters": [
           {
@@ -3855,25 +3962,28 @@
       },
       "UpdateUserDTO": {
         "type": "object",
+        "description": "Campos omitidos nao alteram o usuario atual. Campo phone enviado como null remove o telefone.",
         "properties": {
           "email": {
             "type": "string",
             "format": "email",
-            "maxLength": 320,
-            "minLength": 0
+            "maxLength": 320
           },
           "password": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 0
+            "maxLength": 255
           },
           "phone": {
-            "$ref": "#/components/schemas/PhoneDTO"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PhoneDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
-        },
-        "required": [
-          "email"
-        ]
+        }
       },
       "UserResponseDTO": {
         "type": "object",
@@ -4103,6 +4213,7 @@
       },
       "AuthConfigDTO": {
         "type": "object",
+        "description": "Em updates, campos omitidos nao alteram a configuracao atual. Campo maxActiveSessions enviado como null remove o limite quando o modo de sessao permitir.",
         "properties": {
           "accessTokenExpirationMinutes": {
             "type": "integer",
@@ -4125,7 +4236,10 @@
             ]
           },
           "maxActiveSessions": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "maximum": 100,
             "minimum": 1
@@ -4153,24 +4267,23 @@
           },
           "registrationEnabled": {
             "type": "boolean"
-          },
-          "maxActiveSessionsRequiredWhenLimited": {
-            "type": "boolean"
           }
         }
       },
       "UpdateProjectDTO": {
         "type": "object",
+        "description": "Campos omitidos nao alteram o projeto atual. Campo description enviado como null remove a descricao.",
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 100,
-            "minLength": 0
+            "maxLength": 100
           },
           "description": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 0
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
           },
           "status": {
             "type": "string",
@@ -4189,16 +4302,9 @@
           },
           "tokenAudience": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 0
+            "maxLength": 255
           }
-        },
-        "required": [
-          "environment",
-          "name",
-          "status",
-          "tokenAudience"
-        ]
+        }
       },
       "ProjectResponseDTO": {
         "type": "object",
@@ -4524,6 +4630,7 @@
       },
       "PasswordConfigDTO": {
         "type": "object",
+        "description": "Em updates, campos omitidos nao alteram a configuracao atual.",
         "properties": {
           "minSize": {
             "type": "integer",
@@ -4547,9 +4654,6 @@
             "type": "boolean"
           },
           "specialCharRequired": {
-            "type": "boolean"
-          },
-          "validRange": {
             "type": "boolean"
           }
         }
@@ -4575,6 +4679,18 @@
         },
         "required": [
           "refreshToken"
+        ]
+      },
+      "SocialLoginExchangeRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "code"
         ]
       },
       "LoginDTO": {
@@ -4603,10 +4719,16 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "lastName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "email": {
             "type": "string"
@@ -4626,7 +4748,20 @@
             "$ref": "#/components/schemas/PhoneDTO"
           },
           "CPF": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2048
+          },
+          "profileComplete": {
+            "type": "boolean"
           }
         }
       },
@@ -4637,13 +4772,26 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "lastName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "email": {
             "type": "string"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2048
           }
         }
       },

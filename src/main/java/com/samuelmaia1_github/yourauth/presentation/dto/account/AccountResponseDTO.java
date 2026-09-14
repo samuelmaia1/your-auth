@@ -14,6 +14,8 @@ public record AccountResponseDTO(
         LocalDateTime updatedAt,
         AddressDTO address,
         PhoneDTO phone,
-        String CPF
+        String CPF,
+        String avatarUrl,
+        boolean profileComplete
 ) {
 }

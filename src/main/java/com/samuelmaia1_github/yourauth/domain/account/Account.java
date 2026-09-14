@@ -22,8 +22,44 @@ public class Account {
     private Address address;
     private Phone phone;
     private CPF CPF;
+    private String avatarUrl;
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void updateAvatarUrl(String avatarUrl) {
+        if (avatarUrl != null && !avatarUrl.isBlank()) {
+            this.avatarUrl = avatarUrl;
+        }
+    }
+
+    public boolean isProfileComplete() {
+        return isPresent(name)
+                && isPresent(lastName)
+                && isPresent(password)
+                && CPF != null
+                && isAddressComplete()
+                && isPhoneComplete();
+    }
+
+    private boolean isAddressComplete() {
+        return address != null
+                && isPresent(address.getCep())
+                && isPresent(address.getStreet())
+                && isPresent(address.getNeighborhood())
+                && isPresent(address.getCity())
+                && isPresent(address.getState())
+                && isPresent(address.getNumber());
+    }
+
+    private boolean isPhoneComplete() {
+        return phone != null
+                && isPresent(phone.getDdd())
+                && isPresent(phone.getNumber());
+    }
+
+    private boolean isPresent(String value) {
+        return value != null && !value.isBlank();
     }
 }

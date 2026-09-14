@@ -7,6 +7,7 @@ import com.samuelmaia1_github.yourauth.domain.project.exceptions.ProjectNotFound
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigRepository;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigService;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigUpdate;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMember;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRepository;
 import com.samuelmaia1_github.yourauth.domain.projectmember.ProjectMemberRole;
@@ -55,14 +56,7 @@ class PasswordConfigServiceTest {
                 new StubProjectRepository(true),
                 memberRepository
         );
-        PasswordConfig requestedConfig = PasswordConfig.builder()
-                .minSize(10)
-                .maxSize(80)
-                .numberRequired(true)
-                .uppercaseRequired(true)
-                .lowercaseRequired(true)
-                .specialCharRequired(true)
-                .build();
+        PasswordConfigUpdate requestedConfig = fullPasswordConfigUpdate();
 
         PasswordConfig updatedConfig = service.update(PROJECT_ID, requestedConfig, ACCOUNT_ID);
 
@@ -76,6 +70,44 @@ class PasswordConfigServiceTest {
     }
 
     @Test
+    void shouldUpdateOnlyProvidedPasswordConfigFields() {
+        RecordingPasswordConfigRepository passwordConfigRepository = new RecordingPasswordConfigRepository(
+                Optional.of(strictCurrentConfig())
+        );
+        PasswordConfigService service = new PasswordConfigService(
+                passwordConfigRepository,
+                new StubProjectRepository(true),
+                new RecordingProjectMemberRepository(true, true)
+        );
+
+        PasswordConfig updatedConfig = service.update(
+                PROJECT_ID,
+                new PasswordConfigUpdate(
+                        10,
+                        true,
+                        null,
+                        false,
+                        false,
+                        true,
+                        null,
+                        false,
+                        null,
+                        false,
+                        null,
+                        false
+                ),
+                ACCOUNT_ID
+        );
+
+        assertThat(updatedConfig.getMinSize()).isEqualTo(10);
+        assertThat(updatedConfig.getMaxSize()).isEqualTo(64);
+        assertThat(updatedConfig.isNumberRequired()).isFalse();
+        assertThat(updatedConfig.isUppercaseRequired()).isTrue();
+        assertThat(updatedConfig.isLowercaseRequired()).isTrue();
+        assertThat(updatedConfig.isSpecialCharRequired()).isFalse();
+    }
+
+    @Test
     void shouldDenyUpdatePasswordConfigWhenAuthenticatedAccountCannotManageProject() {
         RecordingPasswordConfigRepository passwordConfigRepository = new RecordingPasswordConfigRepository(
                 Optional.of(currentConfig())
@@ -86,7 +118,7 @@ class PasswordConfigServiceTest {
                 new RecordingProjectMemberRepository(true, false)
         );
 
-        assertThatThrownBy(() -> service.update(PROJECT_ID, currentConfig(), ACCOUNT_ID))
+        assertThatThrownBy(() -> service.update(PROJECT_ID, emptyPasswordConfigUpdate(), ACCOUNT_ID))
                 .isInstanceOf(ProjectAccessDeniedException.class);
 
         assertThat(passwordConfigRepository.savedConfig).isNull();
@@ -135,10 +167,20 @@ class PasswordConfigServiceTest {
                 new StubProjectRepository(true),
                 new RecordingProjectMemberRepository(true, true)
         );
-        PasswordConfig requestedConfig = PasswordConfig.builder()
-                .minSize(20)
-                .maxSize(10)
-                .build();
+        PasswordConfigUpdate requestedConfig = new PasswordConfigUpdate(
+                20,
+                true,
+                10,
+                true,
+                null,
+                false,
+                null,
+                false,
+                null,
+                false,
+                null,
+                false
+        );
 
         assertThatThrownBy(() -> service.update(PROJECT_ID, requestedConfig, ACCOUNT_ID))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -173,6 +215,53 @@ class PasswordConfigServiceTest {
                 .minSize(1)
                 .maxSize(120)
                 .build();
+    }
+
+    private static PasswordConfig strictCurrentConfig() {
+        return PasswordConfig.builder()
+                .id("password-config-id")
+                .projectId(PROJECT_ID)
+                .minSize(8)
+                .maxSize(64)
+                .numberRequired(true)
+                .uppercaseRequired(true)
+                .lowercaseRequired(true)
+                .specialCharRequired(false)
+                .build();
+    }
+
+    private static PasswordConfigUpdate fullPasswordConfigUpdate() {
+        return new PasswordConfigUpdate(
+                10,
+                true,
+                80,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+        );
+    }
+
+    private static PasswordConfigUpdate emptyPasswordConfigUpdate() {
+        return new PasswordConfigUpdate(
+                null,
+                false,
+                null,
+                false,
+                null,
+                false,
+                null,
+                false,
+                null,
+                false,
+                null,
+                false
+        );
     }
 
     private static class RecordingPasswordConfigRepository implements PasswordConfigRepository {

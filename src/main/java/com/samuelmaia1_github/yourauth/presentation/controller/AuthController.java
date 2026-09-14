@@ -1,6 +1,7 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AccountAuthService;
+import com.samuelmaia1_github.yourauth.domain.social.SocialLoginService;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountLoginSessionDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountRefreshRequestDTO;
@@ -8,6 +9,7 @@ import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountSessionToken
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountTokensResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.LoginMobileResponseDTO;
+import com.samuelmaia1_github.yourauth.presentation.dto.auth.SocialLoginExchangeRequest;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.user.TokenDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +24,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -29,15 +32,23 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 
+import static com.samuelmaia1_github.yourauth.domain.shared.SafeLog.compact;
+import static com.samuelmaia1_github.yourauth.domain.shared.SafeLog.maskCpf;
+import static com.samuelmaia1_github.yourauth.domain.shared.SafeLog.maskEmail;
+import static com.samuelmaia1_github.yourauth.domain.shared.SafeLog.present;
+
 @RestController
 @RequestMapping("/auth")
 @Tag(name = "Account Authentication", description = "Login e renovacao de sessao para contas proprietarias.")
+@Slf4j
 public class AuthController {
 
     private final AccountAuthService service;
+    private final SocialLoginService socialLoginService;
 
-    public AuthController(AccountAuthService service) {
+    public AuthController(AccountAuthService service, SocialLoginService socialLoginService) {
         this.service = service;
+        this.socialLoginService = socialLoginService;
     }
 
     @PostMapping("/login")
@@ -103,9 +114,18 @@ public class AuthController {
             ) String deviceName,
             HttpServletRequest request
     ) {
+        String resolvedIpAddress = resolveIpAddress(ipAddress, request);
+        log.info(
+                "Requisicao de login web recebida: credential={}, ipAddress={}, userAgent={}, deviceName={}",
+                credential(loginDTO),
+                compact(resolvedIpAddress, 64),
+                compact(userAgent, 120),
+                compact(deviceName, 80)
+        );
+
         AccountLoginSessionDTO loginData = service.login(
                 loginDTO,
-                resolveIpAddress(ipAddress, request),
+                resolvedIpAddress,
                 userAgent,
                 deviceName
         );
@@ -114,6 +134,14 @@ public class AuthController {
 
         ResponseCookie refreshCookie = buildRefreshCookie(loginData.refreshToken());
         ResponseCookie accessCookie = buildAccessCookie(loginData.accessToken());
+        log.info(
+                "Login web concluido: accountId={}, email={}, refreshCookieMaxAge={}, accessCookieMaxAge={}",
+                account.id(),
+                maskEmail(account.email()),
+                refreshCookie.getMaxAge(),
+                accessCookie.getMaxAge()
+        );
+        log.debug("Cookies de login web preparados: refreshCookieName=refresh_token, accessCookieName=access-token, sameSite=None, secure=true, httpOnly=true");
 
         return ResponseEntity
                 .ok()
@@ -180,14 +208,30 @@ public class AuthController {
             ) String deviceName,
             HttpServletRequest request
     ) {
+        String resolvedIpAddress = resolveIpAddress(ipAddress, request);
+        log.info(
+                "Requisicao de login mobile recebida: credential={}, ipAddress={}, userAgent={}, deviceName={}",
+                credential(loginDTO),
+                compact(resolvedIpAddress, 64),
+                compact(userAgent, 120),
+                compact(deviceName, 80)
+        );
+
         AccountLoginSessionDTO loginData = service.login(
                 loginDTO,
-                resolveIpAddress(ipAddress, request),
+                resolvedIpAddress,
                 userAgent,
                 deviceName
         );
 
         AccountResponseDTO account = loginData.account();
+        log.info(
+                "Login mobile concluido: accountId={}, email={}, accessTokenDuration={}, refreshTokenDuration={}",
+                account.id(),
+                maskEmail(account.email()),
+                loginData.accessToken().duration(),
+                loginData.refreshToken().duration()
+        );
 
         return ResponseEntity
                 .ok()
@@ -196,6 +240,103 @@ public class AuthController {
                         loginData.accessToken().raw(),
                         loginData.refreshToken().raw()
                 ));
+    }
+
+    @PostMapping("/social/exchange")
+    @Operation(
+            summary = "Troca codigo temporario de login social",
+            description = "Valida o codigo de uso unico criado apos OAuth2, cria uma sessao persistida de conta e define cookies HTTP-only de access token e refresh token."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Conta autenticada. Os cookies access-token e refresh_token sao enviados no header Set-Cookie.",
+                    headers = @Header(
+                            name = HttpHeaders.SET_COOKIE,
+                            description = "Define os cookies HTTP-only access-token e refresh_token.",
+                            schema = @Schema(type = "string")
+                    ),
+                    content = @Content(schema = @Schema(implementation = AccountResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Corpo da requisicao invalido ou erro de validacao.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Codigo social invalido, expirado ou ja consumido.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Falha ao gerar tokens da sessao.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<AccountResponseDTO> exchangeSocialCode(
+            @Valid @RequestBody SocialLoginExchangeRequest exchangeRequest,
+            @Parameter(
+                    description = "Identificador do client/dispositivo usado para registrar a sessao e o refresh token.",
+                    in = ParameterIn.HEADER,
+                    example = "Mozilla/5.0"
+            )
+            @RequestHeader(
+                    value = HttpHeaders.USER_AGENT,
+                    required = false
+            ) String userAgent,
+            @Parameter(
+                    description = "IP real da conta autenticada.",
+                    in = ParameterIn.HEADER,
+                    example = "203.0.113.10"
+            )
+            @RequestHeader(
+                    value = "X-End-User-IP",
+                    required = false
+            ) String ipAddress,
+            @Parameter(
+                    description = "Nome amigavel do dispositivo usado na sessao.",
+                    in = ParameterIn.HEADER,
+                    example = "Chrome macOS"
+            )
+            @RequestHeader(
+                    value = "X-Device-Name",
+                    required = false
+            ) String deviceName,
+            HttpServletRequest request
+    ) {
+        String resolvedIpAddress = resolveIpAddress(ipAddress, request);
+        log.info(
+                "Requisicao de troca de codigo social recebida: codePresent={}, ipAddress={}, userAgent={}, deviceName={}",
+                present(exchangeRequest.code()),
+                compact(resolvedIpAddress, 64),
+                compact(userAgent, 120),
+                compact(deviceName, 80)
+        );
+
+        AccountLoginSessionDTO loginData = socialLoginService.exchangeCode(
+                exchangeRequest.code(),
+                resolvedIpAddress,
+                userAgent,
+                deviceName
+        );
+
+        ResponseCookie refreshCookie = buildRefreshCookie(loginData.refreshToken());
+        ResponseCookie accessCookie = buildAccessCookie(loginData.accessToken());
+        log.info(
+                "Troca de codigo social concluida: accountId={}, email={}, refreshCookieMaxAge={}, accessCookieMaxAge={}",
+                loginData.account().id(),
+                maskEmail(loginData.account().email()),
+                refreshCookie.getMaxAge(),
+                accessCookie.getMaxAge()
+        );
+        log.debug("Cookies de troca social preparados: refreshCookieName=refresh_token, accessCookieName=access-token, sameSite=None, secure=true, httpOnly=true");
+
+        return ResponseEntity
+                .ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .body(loginData.account());
     }
 
     @PostMapping("/refresh")
@@ -244,10 +385,17 @@ public class AuthController {
             )
             @CookieValue("refresh_token") String refreshToken
     ) {
+        log.info("Requisicao de refresh web recebida: refreshTokenPresent={}", present(refreshToken));
         AccountSessionTokensDTO tokens = service.refreshAccountSession(refreshToken);
 
         ResponseCookie refreshCookie = buildRefreshCookie(tokens.refreshToken());
         ResponseCookie accessCookie = buildAccessCookie(tokens.accessToken());
+        log.info(
+                "Refresh web concluido: refreshCookieMaxAge={}, accessCookieMaxAge={}",
+                refreshCookie.getMaxAge(),
+                accessCookie.getMaxAge()
+        );
+        log.debug("Cookies de refresh web preparados: refreshCookieName=refresh_token, accessCookieName=access-token, sameSite=None, secure=true, httpOnly=true");
 
         return ResponseEntity
                 .ok()
@@ -291,7 +439,13 @@ public class AuthController {
     public ResponseEntity<AccountTokensResponseDTO> refreshMobileToken(
             @Valid @RequestBody AccountRefreshRequestDTO requestDTO
     ) {
+        log.info("Requisicao de refresh mobile recebida: refreshTokenPresent={}", present(requestDTO.refreshToken()));
         AccountSessionTokensDTO tokens = service.refreshAccountSession(requestDTO.refreshToken());
+        log.info(
+                "Refresh mobile concluido: accessTokenDuration={}, refreshTokenDuration={}",
+                tokens.accessToken().duration(),
+                tokens.refreshToken().duration()
+        );
 
         return ResponseEntity
                 .ok()
@@ -334,7 +488,9 @@ public class AuthController {
             )
             @CookieValue("refresh_token") String refreshToken
     ) {
+        log.info("Requisicao de logout web recebida: refreshTokenPresent={}", present(refreshToken));
         service.logoutAccountSession(refreshToken);
+        log.info("Logout web concluido: cookiesCleared=true");
 
         return ResponseEntity
                 .noContent()
@@ -368,7 +524,9 @@ public class AuthController {
     public ResponseEntity<Void> logoutMobile(
             @Valid @RequestBody AccountRefreshRequestDTO requestDTO
     ) {
+        log.info("Requisicao de logout mobile recebida: refreshTokenPresent={}", present(requestDTO.refreshToken()));
         service.logoutAccountSession(requestDTO.refreshToken());
+        log.info("Logout mobile concluido");
 
         return ResponseEntity.noContent().build();
     }
@@ -409,9 +567,20 @@ public class AuthController {
 
     private String resolveIpAddress(String ipAddress, HttpServletRequest request) {
         if (ipAddress != null && !ipAddress.isBlank()) {
+            log.debug("IP da autenticacao resolvido pelo header X-End-User-IP: ipAddress={}", compact(ipAddress, 64));
             return ipAddress;
         }
 
-        return request.getRemoteAddr();
+        String remoteAddress = request.getRemoteAddr();
+        log.debug("IP da autenticacao resolvido pelo remoteAddr: ipAddress={}", compact(remoteAddress, 64));
+        return remoteAddress;
+    }
+
+    private String credential(LoginDTO loginDTO) {
+        if (loginDTO.email() != null && !loginDTO.email().isBlank()) {
+            return "email=" + maskEmail(loginDTO.email());
+        }
+
+        return "cpf=" + maskCpf(loginDTO.cpf());
     }
 }

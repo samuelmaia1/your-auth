@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.presentation.mapper;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserStatus;
+import com.samuelmaia1_github.yourauth.domain.user.UserUpdate;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UpdateUserDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.UserResponseDTO;
@@ -20,12 +21,15 @@ public class UserPresentationMapper {
                 .build();
     }
 
-    public static User toDomain(UpdateUserDTO dto) {
-        return User.builder()
-                .email(dto.email())
-                .password(dto.password())
-                .phone(PhonePresentationMapper.toDomain(dto.phone()))
-                .build();
+    public static UserUpdate toUpdate(UpdateUserDTO dto) {
+        return new UserUpdate(
+                dto.email(),
+                dto.emailProvided(),
+                dto.password(),
+                dto.passwordProvided(),
+                PhonePresentationMapper.toDomain(dto.phone()),
+                dto.phoneProvided()
+        );
     }
 
     public static UserResponseDTO toResponseDTO(User user) {

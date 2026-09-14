@@ -1,6 +1,7 @@
 package com.samuelmaia1_github.yourauth.presentation.mapper;
 
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
+import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfigUpdate;
 import com.samuelmaia1_github.yourauth.presentation.dto.authconfig.AuthConfigDTO;
 
 public class AuthConfigPresentationMapper {
@@ -60,6 +61,31 @@ public class AuthConfigPresentationMapper {
                                 : AuthConfig.DEFAULT_REGISTRATION_ENABLED
                 )
                 .build();
+    }
+
+    public static AuthConfigUpdate toUpdate(AuthConfigDTO dto) {
+        return new AuthConfigUpdate(
+                dto.accessTokenExpirationMinutes(),
+                dto.accessTokenExpirationMinutesProvided(),
+                dto.refreshTokenExpirationDays(),
+                dto.refreshTokenExpirationDaysProvided(),
+                dto.sessionMode(),
+                dto.sessionModeProvided(),
+                dto.maxActiveSessions(),
+                dto.maxActiveSessionsProvided(),
+                dto.refreshTokenRotationEnabled(),
+                dto.refreshTokenRotationEnabledProvided(),
+                dto.revokeTokensOnPasswordChange(),
+                dto.revokeTokensOnPasswordChangeProvided(),
+                dto.failedLoginAttemptsLimit(),
+                dto.failedLoginAttemptsLimitProvided(),
+                dto.lockDurationMinutes(),
+                dto.lockDurationMinutesProvided(),
+                dto.requireEmailVerification(),
+                dto.requireEmailVerificationProvided(),
+                dto.registrationEnabled(),
+                dto.registrationEnabledProvided()
+        );
     }
 
     public static AuthConfigDTO toDto(AuthConfig domain) {
