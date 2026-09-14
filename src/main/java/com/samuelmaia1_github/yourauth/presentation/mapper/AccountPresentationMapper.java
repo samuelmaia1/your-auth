@@ -34,7 +34,9 @@ public class AccountPresentationMapper {
                 account.getUpdatedAt(),
                 AddressPresentationMapper.toDTO(account.getAddress()),
                 PhonePresentationMapper.toDTO(account.getPhone()),
-                account.getCPF().toString()
+                account.getCPF() == null ? null : account.getCPF().toString(),
+                account.getAvatarUrl(),
+                account.isProfileComplete()
         );
     }
 
@@ -43,7 +45,8 @@ public class AccountPresentationMapper {
                 account.getId(),
                 account.getName(),
                 account.getLastName(),
-                account.getEmail()
+                account.getEmail(),
+                account.getAvatarUrl()
         );
     }
 }

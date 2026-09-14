@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface AccountJpaRepository extends JpaRepository<AccountEntity, String> {
     Optional<AccountEntity> findByEmail(String email);
+    Optional<AccountEntity> findByEmailIgnoreCase(String email);
     Optional<AccountEntity> findByCPF(CPF cpf);
     Optional<AccountEntity> findByEmailIgnoreCaseOrCPF(String email, CPF cpf);
 }

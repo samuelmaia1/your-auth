@@ -44,7 +44,7 @@ public class AuthConfigService {
             cacheNames = AuthConfigCacheNames.AUTH_CONFIG_BY_PROJECT_AND_ACCOUNT,
             allEntries = true
     )
-    public AuthConfig update(String projectId, AuthConfig requestedConfig, String accountId) {
+    public AuthConfig update(String projectId, AuthConfigUpdate requestedConfig, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);
 
@@ -52,16 +52,65 @@ public class AuthConfigService {
         AuthConfig updatedConfig = AuthConfig.builder()
                 .id(currentConfig.getId())
                 .projectId(currentConfig.getProjectId())
-                .accessTokenExpirationMinutes(requestedConfig.getAccessTokenExpirationMinutes())
-                .refreshTokenExpirationDays(requestedConfig.getRefreshTokenExpirationDays())
-                .sessionMode(requestedConfig.getSessionMode())
-                .maxActiveSessions(requestedConfig.getMaxActiveSessions())
-                .refreshTokenRotationEnabled(requestedConfig.isRefreshTokenRotationEnabled())
-                .revokeTokensOnPasswordChange(requestedConfig.isRevokeTokensOnPasswordChange())
-                .failedLoginAttemptsLimit(requestedConfig.getFailedLoginAttemptsLimit())
-                .lockDurationMinutes(requestedConfig.getLockDurationMinutes())
-                .requireEmailVerification(requestedConfig.isRequireEmailVerification())
-                .registrationEnabled(requestedConfig.isRegistrationEnabled())
+                .accessTokenExpirationMinutes(requiredIntOrCurrent(
+                        requestedConfig.accessTokenExpirationMinutes(),
+                        requestedConfig.accessTokenExpirationMinutesProvided(),
+                        currentConfig.getAccessTokenExpirationMinutes(),
+                        "A expiração do access token é obrigatória."
+                ))
+                .refreshTokenExpirationDays(requiredIntOrCurrent(
+                        requestedConfig.refreshTokenExpirationDays(),
+                        requestedConfig.refreshTokenExpirationDaysProvided(),
+                        currentConfig.getRefreshTokenExpirationDays(),
+                        "A expiração do refresh token é obrigatória."
+                ))
+                .sessionMode(requiredValueOrCurrent(
+                        requestedConfig.sessionMode(),
+                        requestedConfig.sessionModeProvided(),
+                        currentConfig.getSessionMode(),
+                        "O modo de sessão é obrigatório."
+                ))
+                .maxActiveSessions(
+                        requestedConfig.maxActiveSessionsProvided()
+                                ? requestedConfig.maxActiveSessions()
+                                : currentConfig.getMaxActiveSessions()
+                )
+                .refreshTokenRotationEnabled(requiredBooleanOrCurrent(
+                        requestedConfig.refreshTokenRotationEnabled(),
+                        requestedConfig.refreshTokenRotationEnabledProvided(),
+                        currentConfig.isRefreshTokenRotationEnabled(),
+                        "A rotação de refresh token é obrigatória."
+                ))
+                .revokeTokensOnPasswordChange(requiredBooleanOrCurrent(
+                        requestedConfig.revokeTokensOnPasswordChange(),
+                        requestedConfig.revokeTokensOnPasswordChangeProvided(),
+                        currentConfig.isRevokeTokensOnPasswordChange(),
+                        "A revogação de tokens na troca de senha é obrigatória."
+                ))
+                .failedLoginAttemptsLimit(requiredIntOrCurrent(
+                        requestedConfig.failedLoginAttemptsLimit(),
+                        requestedConfig.failedLoginAttemptsLimitProvided(),
+                        currentConfig.getFailedLoginAttemptsLimit(),
+                        "O limite de tentativas de login é obrigatório."
+                ))
+                .lockDurationMinutes(requiredIntOrCurrent(
+                        requestedConfig.lockDurationMinutes(),
+                        requestedConfig.lockDurationMinutesProvided(),
+                        currentConfig.getLockDurationMinutes(),
+                        "A duração do bloqueio é obrigatória."
+                ))
+                .requireEmailVerification(requiredBooleanOrCurrent(
+                        requestedConfig.requireEmailVerification(),
+                        requestedConfig.requireEmailVerificationProvided(),
+                        currentConfig.isRequireEmailVerification(),
+                        "A exigência de verificação de e-mail é obrigatória."
+                ))
+                .registrationEnabled(requiredBooleanOrCurrent(
+                        requestedConfig.registrationEnabled(),
+                        requestedConfig.registrationEnabledProvided(),
+                        currentConfig.isRegistrationEnabled(),
+                        "A habilitação de cadastro é obrigatória."
+                ))
                 .createdAt(currentConfig.getCreatedAt())
                 .updatedAt(currentConfig.getUpdatedAt())
                 .build();
@@ -117,5 +166,46 @@ public class AuthConfigService {
                     "O limite de sessões ativas só deve ser informado para o modo LIMITED_ACTIVE_SESSIONS."
             );
         }
+    }
+
+    private static int requiredIntOrCurrent(Integer value, boolean provided, int currentValue, String message) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
+    }
+
+    private static boolean requiredBooleanOrCurrent(
+            Boolean value,
+            boolean provided,
+            boolean currentValue,
+            String message
+    ) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
+    }
+
+    private static <T> T requiredValueOrCurrent(T value, boolean provided, T currentValue, String message) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
     }
 }

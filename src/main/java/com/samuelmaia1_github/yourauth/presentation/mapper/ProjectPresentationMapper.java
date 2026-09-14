@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.presentation.mapper;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
 import com.samuelmaia1_github.yourauth.domain.project.Project;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectStatus;
+import com.samuelmaia1_github.yourauth.domain.project.ProjectUpdate;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.CreateProjectDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.ProjectResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.project.UpdateProjectDTO;
@@ -21,14 +22,19 @@ public class ProjectPresentationMapper {
                 .build();
     }
 
-    public static Project toDomain(UpdateProjectDTO dto) {
-        return Project.builder()
-                .name(dto.name())
-                .description(dto.description())
-                .status(dto.status())
-                .environment(dto.environment())
-                .tokenAudience(dto.tokenAudience())
-                .build();
+    public static ProjectUpdate toUpdate(UpdateProjectDTO dto) {
+        return new ProjectUpdate(
+                dto.name(),
+                dto.nameProvided(),
+                dto.description(),
+                dto.descriptionProvided(),
+                dto.status(),
+                dto.statusProvided(),
+                dto.environment(),
+                dto.environmentProvided(),
+                dto.tokenAudience(),
+                dto.tokenAudienceProvided()
+        );
     }
 
     public static ProjectResponseDTO toResponseDTO(Project project) {

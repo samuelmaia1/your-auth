@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigService;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigUpdate;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.dto.passwordconfig.PasswordConfigDTO;
 import com.samuelmaia1_github.yourauth.presentation.mapper.PasswordConfigPresentationMapper;
@@ -70,7 +71,10 @@ public class PasswordConfigController {
     }
 
     @PutMapping
-    @Operation(summary = "Atualiza a configuracao de senha de um projeto")
+    @Operation(
+            summary = "Atualiza a configuracao de senha de um projeto",
+            description = "Atualiza apenas os campos enviados no corpo da requisição. Campos omitidos permanecem com o valor atual."
+    )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -104,7 +108,7 @@ public class PasswordConfigController {
             @PathVariable String projectId,
             @Valid @RequestBody PasswordConfigDTO dto
     ) {
-        PasswordConfig config = PasswordConfigPresentationMapper.toDomain(dto);
+        PasswordConfigUpdate config = PasswordConfigPresentationMapper.toUpdate(dto);
         PasswordConfig updatedConfig = service.update(projectId, config, authenticatedAccount.id());
 
         return ResponseEntity.ok(PasswordConfigPresentationMapper.toDto(updatedConfig));

@@ -1,6 +1,7 @@
 package com.samuelmaia1_github.yourauth.presentation.mapper;
 
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
+import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfigUpdate;
 import com.samuelmaia1_github.yourauth.presentation.dto.passwordconfig.PasswordConfigDTO;
 
 public class PasswordConfigPresentationMapper {
@@ -33,6 +34,23 @@ public class PasswordConfigPresentationMapper {
                                 : PasswordConfig.DEFAULT_MAX_SIZE
                 )
                 .build();
+    }
+
+    public static PasswordConfigUpdate toUpdate(PasswordConfigDTO dto) {
+        return new PasswordConfigUpdate(
+                dto.minSize(),
+                dto.minSizeProvided(),
+                dto.maxSize(),
+                dto.maxSizeProvided(),
+                dto.numberRequired(),
+                dto.numberRequiredProvided(),
+                dto.uppercaseRequired(),
+                dto.uppercaseRequiredProvided(),
+                dto.lowercaseRequired(),
+                dto.lowercaseRequiredProvided(),
+                dto.specialCharRequired(),
+                dto.specialCharRequiredProvided()
+        );
     }
 
     public static PasswordConfigDTO toDto(PasswordConfig domain) {

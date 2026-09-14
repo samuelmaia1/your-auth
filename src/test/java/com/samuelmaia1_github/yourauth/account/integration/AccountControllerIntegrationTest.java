@@ -7,10 +7,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,6 +59,24 @@ class AccountControllerIntegrationTest {
                         .param("email", "target@example.com"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Autenticação obrigatória."));
+    }
+
+    @Test
+    void shouldKeepTraditionalAccountCreationFieldsRequired() throws Exception {
+        mockMvc.perform(post("/accounts/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Traditional",
+                                  "email": "traditional@example.com",
+                                  "password": "Password1"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields.lastName").exists())
+                .andExpect(jsonPath("$.fields.CPF").exists())
+                .andExpect(jsonPath("$.fields.address").exists())
+                .andExpect(jsonPath("$.fields.phone").exists());
     }
 
     private String token(String id, String email, String cpf, String sessionId) {

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class TokenService {
@@ -63,17 +64,19 @@ public class TokenService {
         try {
             ensureSessionIdIsPresent(sessionId);
             Algorithm algorithm = Algorithm.HMAC256(secret);
+            Instant expiresAt = generateExpirationDate();
 
-            return JWT
+            String token = JWT
                     .create()
                     .withIssuer(issuer)
                     .withSubject(account.getId())
                     .withClaim(TOKEN_TYPE_CLAIM, ACCOUNT_TOKEN_TYPE)
                     .withClaim("email", account.getEmail())
-                    .withClaim("CPF", account.getCPF().getValue())
+                    .withClaim("CPF", account.getCPF() == null ? null : account.getCPF().getValue())
                     .withClaim(SESSION_ID_CLAIM, sessionId)
-                    .withExpiresAt(generateExpirationDate())
+                    .withExpiresAt(expiresAt)
                     .sign(algorithm);
+            return token;
         } catch (Exception exception) {
             throw new GenerateTokenFailException("Falha ao gerar token de acesso", exception);
         }
@@ -119,9 +122,10 @@ public class TokenService {
     public boolean isValidAccountAccessToken(String token) {
         try {
             DecodedJWT decodedToken = verify(token);
+            boolean expectedType = hasExpectedType(decodedToken, ACCOUNT_TOKEN_TYPE);
+            boolean validSession = expectedType && hasValidAccountSession(decodedToken);
 
-            return hasExpectedType(decodedToken, ACCOUNT_TOKEN_TYPE)
-                    && hasValidAccountSession(decodedToken);
+            return expectedType && validSession;
         } catch (JWTVerificationException exception) {
             return false;
         }
@@ -144,8 +148,9 @@ public class TokenService {
 
     public String recoverToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer "))
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.replace("Bearer ", "");
+        }
 
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
@@ -214,10 +219,21 @@ public class TokenService {
             return false;
         }
 
-        return accountSessionRepository.findById(sessionId)
-                .filter(AccountSession::isValid)
-                .filter(session -> Objects.equals(accountId, session.getAccountId()))
-                .isPresent();
+        Optional<AccountSession> optionalSession = accountSessionRepository.findById(sessionId);
+
+        if (optionalSession.isEmpty()) {
+            return false;
+        }
+
+        AccountSession session = optionalSession.get();
+        boolean sameAccount = Objects.equals(accountId, session.getAccountId());
+        boolean validSession = session.isValid();
+
+        if (!sameAccount || !validSession) {
+            return false;
+        }
+
+        return true;
     }
 
     private boolean hasValidUserSession(DecodedJWT token) {

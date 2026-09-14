@@ -162,6 +162,12 @@ public class AccountServiceTest {
         }
 
         @Override
+        public Optional<Account> findByEmailIgnoreCase(String email) {
+            searchedEmail = email;
+            return accountByEmail;
+        }
+
+        @Override
         public Optional<Account> findByCPF(CPF cpf) {
             return Optional.empty();
         }

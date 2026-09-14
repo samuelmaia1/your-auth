@@ -75,6 +75,11 @@ public class AccountPolicyTest {
         }
 
         @Override
+        public Optional<Account> findByEmailIgnoreCase(String email) {
+            return accountByEmail;
+        }
+
+        @Override
         public Optional<Account> findByCPF(CPF cpf) {
             return accountByCPF;
         }

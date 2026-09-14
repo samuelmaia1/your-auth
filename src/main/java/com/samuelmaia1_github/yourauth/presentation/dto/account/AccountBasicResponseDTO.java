@@ -4,6 +4,7 @@ public record AccountBasicResponseDTO(
         String id,
         String name,
         String lastName,
-        String email
+        String email,
+        String avatarUrl
 ) {
 }

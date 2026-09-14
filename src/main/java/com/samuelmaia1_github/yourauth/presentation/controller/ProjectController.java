@@ -3,6 +3,7 @@ package com.samuelmaia1_github.yourauth.presentation.controller;
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedAccount;
 import com.samuelmaia1_github.yourauth.domain.project.Project;
 import com.samuelmaia1_github.yourauth.domain.project.ProjectService;
+import com.samuelmaia1_github.yourauth.domain.project.ProjectUpdate;
 import com.samuelmaia1_github.yourauth.domain.project.authconfig.AuthConfig;
 import com.samuelmaia1_github.yourauth.domain.project.passwordconfig.PasswordConfig;
 import com.samuelmaia1_github.yourauth.domain.shared.PageResult;
@@ -155,7 +156,10 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Atualiza um projeto")
+    @Operation(
+            summary = "Atualiza um projeto",
+            description = "Atualiza apenas os campos enviados no corpo da requisição. Campos omitidos permanecem com o valor atual."
+    )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -189,7 +193,7 @@ public class ProjectController {
             @PathVariable String id,
             @Valid @RequestBody UpdateProjectDTO dto
     ) {
-        Project project = ProjectPresentationMapper.toDomain(dto);
+        ProjectUpdate project = ProjectPresentationMapper.toUpdate(dto);
         Project updatedProject = service.update(id, project, authenticatedAccount.id());
 
         return ResponseEntity.ok(ProjectPresentationMapper.toResponseDTO(updatedProject));

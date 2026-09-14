@@ -5,6 +5,10 @@ import com.samuelmaia1_github.yourauth.presentation.dto.shared.AddressDTO;
 
 public class AddressPresentationMapper {
     public static Address toDomain(AddressDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
         return Address
                 .builder()
                 .cep(dto.cep())
@@ -17,6 +21,10 @@ public class AddressPresentationMapper {
     }
 
     public static AddressDTO toDTO(Address address) {
+        if (address == null) {
+            return null;
+        }
+
         return new AddressDTO(
                 address.getCep(),
                 address.getStreet(),

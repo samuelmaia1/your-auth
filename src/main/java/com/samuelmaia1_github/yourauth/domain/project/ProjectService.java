@@ -144,18 +144,38 @@ public class ProjectService {
                     allEntries = true
             )
     })
-    public Project update(String id, Project project, String accountId) {
+    public Project update(String id, ProjectUpdate project, String accountId) {
         Project currentProject = findProjectOrThrow(id);
         ensureCanManage(currentProject.getId(), accountId);
 
         Project updatedProject = Project.builder()
                 .id(currentProject.getId())
-                .name(project.getName())
-                .description(project.getDescription())
+                .name(requiredTextOrCurrent(
+                        project.name(),
+                        project.nameProvided(),
+                        currentProject.getName(),
+                        "O nome é obrigatório"
+                ))
+                .description(project.descriptionProvided() ? project.description() : currentProject.getDescription())
                 .ownerAccountId(currentProject.getOwnerAccountId())
-                .status(project.getStatus())
-                .environment(project.getEnvironment())
-                .tokenAudience(project.getTokenAudience())
+                .status(requiredValueOrCurrent(
+                        project.status(),
+                        project.statusProvided(),
+                        currentProject.getStatus(),
+                        "O status é obrigatório"
+                ))
+                .environment(requiredValueOrCurrent(
+                        project.environment(),
+                        project.environmentProvided(),
+                        currentProject.getEnvironment(),
+                        "O ambiente é obrigatório"
+                ))
+                .tokenAudience(requiredTextOrCurrent(
+                        project.tokenAudience(),
+                        project.tokenAudienceProvided(),
+                        currentProject.getTokenAudience(),
+                        "A audiência do token é obrigatória"
+                ))
                 .createdAt(currentProject.getCreatedAt())
                 .updatedAt(currentProject.getUpdatedAt())
                 .build();
@@ -242,5 +262,29 @@ public class ProjectService {
         )) {
             throw new ProjectAccessDeniedException();
         }
+    }
+
+    private static String requiredTextOrCurrent(String value, boolean provided, String currentValue, String message) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
+    }
+
+    private static <T> T requiredValueOrCurrent(T value, boolean provided, T currentValue, String message) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
     }
 }

@@ -7,6 +7,7 @@ import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserFilter;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
 import com.samuelmaia1_github.yourauth.domain.user.UserStatus;
+import com.samuelmaia1_github.yourauth.domain.user.UserUpdate;
 import com.samuelmaia1_github.yourauth.domain.usersession.UserSessionService;
 import com.samuelmaia1_github.yourauth.presentation.dto.error.ErrorResponse;
 import com.samuelmaia1_github.yourauth.presentation.dto.user.CreateUserDTO;
@@ -166,7 +167,10 @@ public class ProjectUserController {
     }
 
     @PutMapping("/{userId}")
-    @Operation(summary = "Atualiza um usuario final")
+    @Operation(
+            summary = "Atualiza um usuario final",
+            description = "Atualiza apenas os campos enviados no corpo da requisição. Campos omitidos permanecem com o valor atual."
+    )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -201,7 +205,7 @@ public class ProjectUserController {
             @PathVariable String userId,
             @Valid @RequestBody UpdateUserDTO dto
     ) {
-        User user = UserPresentationMapper.toDomain(dto);
+        UserUpdate user = UserPresentationMapper.toUpdate(dto);
         User updatedUser = userService.update(projectId, userId, user, authenticatedAccount.id());
 
         return ResponseEntity.ok(UserPresentationMapper.toResponseDTO(updatedUser));

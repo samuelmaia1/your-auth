@@ -57,7 +57,7 @@ public class PasswordConfigService {
                     allEntries = true
             )
     })
-    public PasswordConfig update(String projectId, PasswordConfig requestedConfig, String accountId) {
+    public PasswordConfig update(String projectId, PasswordConfigUpdate requestedConfig, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);
 
@@ -65,12 +65,42 @@ public class PasswordConfigService {
         PasswordConfig updatedConfig = PasswordConfig.builder()
                 .id(currentConfig.getId())
                 .projectId(currentConfig.getProjectId())
-                .numberRequired(requestedConfig.isNumberRequired())
-                .specialCharRequired(requestedConfig.isSpecialCharRequired())
-                .uppercaseRequired(requestedConfig.isUppercaseRequired())
-                .lowercaseRequired(requestedConfig.isLowercaseRequired())
-                .minSize(requestedConfig.getMinSize())
-                .maxSize(requestedConfig.getMaxSize())
+                .numberRequired(requiredBooleanOrCurrent(
+                        requestedConfig.numberRequired(),
+                        requestedConfig.numberRequiredProvided(),
+                        currentConfig.isNumberRequired(),
+                        "A exigência de número é obrigatória."
+                ))
+                .specialCharRequired(requiredBooleanOrCurrent(
+                        requestedConfig.specialCharRequired(),
+                        requestedConfig.specialCharRequiredProvided(),
+                        currentConfig.isSpecialCharRequired(),
+                        "A exigência de caractere especial é obrigatória."
+                ))
+                .uppercaseRequired(requiredBooleanOrCurrent(
+                        requestedConfig.uppercaseRequired(),
+                        requestedConfig.uppercaseRequiredProvided(),
+                        currentConfig.isUppercaseRequired(),
+                        "A exigência de letra maiúscula é obrigatória."
+                ))
+                .lowercaseRequired(requiredBooleanOrCurrent(
+                        requestedConfig.lowercaseRequired(),
+                        requestedConfig.lowercaseRequiredProvided(),
+                        currentConfig.isLowercaseRequired(),
+                        "A exigência de letra minúscula é obrigatória."
+                ))
+                .minSize(requiredIntOrCurrent(
+                        requestedConfig.minSize(),
+                        requestedConfig.minSizeProvided(),
+                        currentConfig.getMinSize(),
+                        "O tamanho mínimo é obrigatório."
+                ))
+                .maxSize(requiredIntOrCurrent(
+                        requestedConfig.maxSize(),
+                        requestedConfig.maxSizeProvided(),
+                        currentConfig.getMaxSize(),
+                        "O tamanho máximo é obrigatório."
+                ))
                 .build();
 
         ensureValid(updatedConfig);
@@ -138,5 +168,34 @@ public class PasswordConfigService {
         ) {
             throw new IllegalArgumentException("Os tamanhos de senha devem estar entre 1 e 120.");
         }
+    }
+
+    private static int requiredIntOrCurrent(Integer value, boolean provided, int currentValue, String message) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
+    }
+
+    private static boolean requiredBooleanOrCurrent(
+            Boolean value,
+            boolean provided,
+            boolean currentValue,
+            String message
+    ) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
     }
 }

@@ -222,6 +222,11 @@ class AccountAuthServiceTest {
         }
 
         @Override
+        public Optional<Account> findByEmailIgnoreCase(String email) {
+            return findByEmail(email);
+        }
+
+        @Override
         public Optional<Account> findByCPF(CPF cpf) {
             return Optional.empty();
         }

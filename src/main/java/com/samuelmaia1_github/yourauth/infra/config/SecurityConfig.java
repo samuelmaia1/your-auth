@@ -4,6 +4,8 @@ import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedProjectApiKey;
 import com.samuelmaia1_github.yourauth.infra.security.SecurityFilter;
 import com.samuelmaia1_github.yourauth.infra.security.ProjectApiKeyAuthenticationFilter;
 import com.samuelmaia1_github.yourauth.infra.security.SecurityErrorResponseWriter;
+import com.samuelmaia1_github.yourauth.infra.security.social.SocialOAuth2FailureHandler;
+import com.samuelmaia1_github.yourauth.infra.security.social.SocialOAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,13 +33,19 @@ public class SecurityConfig {
 
     private final SecurityFilter securityFilter;
     private final ProjectApiKeyAuthenticationFilter projectApiKeyAuthenticationFilter;
+    private final SocialOAuth2SuccessHandler socialOAuth2SuccessHandler;
+    private final SocialOAuth2FailureHandler socialOAuth2FailureHandler;
 
     public SecurityConfig(
             SecurityFilter securityFilter,
-            ProjectApiKeyAuthenticationFilter projectApiKeyAuthenticationFilter
+            ProjectApiKeyAuthenticationFilter projectApiKeyAuthenticationFilter,
+            SocialOAuth2SuccessHandler socialOAuth2SuccessHandler,
+            SocialOAuth2FailureHandler socialOAuth2FailureHandler
     ) {
         this.securityFilter = securityFilter;
         this.projectApiKeyAuthenticationFilter = projectApiKeyAuthenticationFilter;
+        this.socialOAuth2SuccessHandler = socialOAuth2SuccessHandler;
+        this.socialOAuth2FailureHandler = socialOAuth2FailureHandler;
     }
 
     @Bean
@@ -46,6 +54,10 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(socialOAuth2SuccessHandler)
+                        .failureHandler(socialOAuth2FailureHandler)
+                )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((request, response, exception) ->
                                 SecurityErrorResponseWriter.write(
@@ -65,6 +77,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth ->
                     auth.requestMatchers("/h2-console/**").permitAll()
                             .requestMatchers("/error").permitAll()
+                            .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                             .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                             .requestMatchers(HttpMethod.GET, "/plans").permitAll()
                             .requestMatchers(HttpMethod.PUT, "/plans/*/limits").permitAll()
@@ -73,6 +86,7 @@ public class SecurityConfig {
                                     HttpMethod.POST,
                                     "/auth/login",
                                     "/auth/mobile/login",
+                                    "/auth/social/exchange",
                                     "/auth/refresh",
                                     "/auth/mobile/refresh",
                                     "/auth/logout",

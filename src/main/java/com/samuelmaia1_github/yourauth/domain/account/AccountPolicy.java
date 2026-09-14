@@ -10,10 +10,10 @@ public class AccountPolicy {
     private final AccountRepository repository;
 
     public void ensureCanCreate(Account account) {
-        if (repository.findByEmail(account.getEmail()).isPresent())
+        if (repository.findByEmailIgnoreCase(account.getEmail()).isPresent())
             throw new AccountAlreadyExistsException("E-mail já cadastrado");
 
-        if (repository.findByCPF(account.getCPF()).isPresent())
+        if (account.getCPF() != null && repository.findByCPF(account.getCPF()).isPresent())
             throw new AccountAlreadyExistsException("CPF já cadastrado");
     }
 }

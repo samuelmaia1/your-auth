@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.samuelmaia1_github.yourauth.infra.cache.names.AccountCacheNames;
 import com.samuelmaia1_github.yourauth.infra.cache.names.PlanCacheNames;
 import com.samuelmaia1_github.yourauth.infra.cache.names.ProjectApiKeyCacheNames;
+import com.samuelmaia1_github.yourauth.infra.cache.names.SubscriptionCacheNames;
 import com.samuelmaia1_github.yourauth.infra.cache.names.UserCacheNames;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.boot.cache.autoconfigure.CacheProperties;
@@ -78,6 +79,8 @@ public class CacheConfig {
                 AccountCacheNames.ACCOUNT_SUMMARY_BY_ACCOUNT_ID,
                 cacheConfiguration.entryTtl(Duration.ofMinutes(1)),
                 AccountCacheNames.ACCOUNT_USAGE_BY_OWNER_ACCOUNT_ID,
+                cacheConfiguration.entryTtl(Duration.ofMinutes(1)),
+                SubscriptionCacheNames.CURRENT_BY_ACCOUNT_ID,
                 cacheConfiguration.entryTtl(Duration.ofMinutes(1)),
                 UserCacheNames.USER_BY_ID,
                 cacheConfiguration.entryTtl(Duration.ofMinutes(2)),

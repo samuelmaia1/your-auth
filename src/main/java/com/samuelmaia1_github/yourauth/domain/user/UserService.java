@@ -141,7 +141,7 @@ public class UserService {
                     allEntries = true
             )
     })
-    public User update(String projectId, String userId, User user, String accountId) {
+    public User update(String projectId, String userId, UserUpdate user, String accountId) {
         ensureProjectExists(projectId);
         ensureCanManage(projectId, accountId);
 
@@ -149,7 +149,12 @@ public class UserService {
         User updatedUser = User.builder()
                 .id(currentUser.getId())
                 .projectId(currentUser.getProjectId())
-                .email(user.getEmail())
+                .email(requiredTextOrCurrent(
+                        user.email(),
+                        user.emailProvided(),
+                        currentUser.getEmail(),
+                        "O e-mail é obrigatório"
+                ))
                 .password(currentUser.getPassword())
                 .status(currentUser.getStatus())
                 .createdAt(currentUser.getCreatedAt())
@@ -161,11 +166,15 @@ public class UserService {
                 .lockedUntil(currentUser.getLockedUntil())
                 .lastLoginIpAddress(currentUser.getLastLoginIpAddress())
                 .lastLoginUserAgent(currentUser.getLastLoginUserAgent())
-                .phone(user.getPhone())
+                .phone(user.phoneProvided() ? user.phone() : currentUser.getPhone())
                 .build();
 
-        if (user.getPassword() != null && !user.getPassword().isBlank()) {
-            updatedUser.updatePassword(encoder.encode(user.getPassword()));
+        if (user.passwordProvided()) {
+            if (user.password() == null || user.password().isBlank()) {
+                throw new IllegalArgumentException("A senha é obrigatória");
+            }
+
+            updatedUser.updatePassword(encoder.encode(user.password()));
         }
 
         policy.ensureCanUpdate(updatedUser);
@@ -227,5 +236,17 @@ public class UserService {
         )) {
             throw new ProjectAccessDeniedException();
         }
+    }
+
+    private static String requiredTextOrCurrent(String value, boolean provided, String currentValue, String message) {
+        if (!provided) {
+            return currentValue;
+        }
+
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
     }
 }

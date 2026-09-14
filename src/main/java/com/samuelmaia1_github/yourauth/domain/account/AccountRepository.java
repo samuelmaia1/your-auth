@@ -11,6 +11,8 @@ public interface AccountRepository {
 
     Optional<Account> findByEmail(String email);
 
+    Optional<Account> findByEmailIgnoreCase(String email);
+
     Optional<Account> findByCPF(CPF cpf);
 
     Optional<Account> findByEmailIgnoreCaseOrCPF(String email, CPF cpf);
