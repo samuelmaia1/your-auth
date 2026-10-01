@@ -1,7 +1,9 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AuthenticatedProjectApiKey;
+import com.samuelmaia1_github.yourauth.domain.auth.TokenService;
 import com.samuelmaia1_github.yourauth.domain.auth.UserAuthService;
+import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
 import com.samuelmaia1_github.yourauth.domain.projectapikey.exceptions.InvalidProjectApiKeyCredentialsException;
 import com.samuelmaia1_github.yourauth.domain.user.User;
 import com.samuelmaia1_github.yourauth.domain.user.UserService;
@@ -24,6 +26,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -42,6 +45,7 @@ import java.time.Duration;
 public class UserController {
     private final UserService userService;
     private final UserAuthService userAuthService;
+    private final TokenService tokenService;
 
     @PostMapping
     @Operation(
@@ -185,6 +189,37 @@ public class UserController {
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .body(responseDTO);
+    }
+
+    @GetMapping("/validate")
+    @Operation(
+            summary = "Valida access token de usuario final",
+            description = "Valida o access token de usuario final de projeto enviado no header Authorization ou no cookie access-token.",
+            security = {
+                    @SecurityRequirement(name = "bearerAuth"),
+                    @SecurityRequirement(name = "accessTokenCookie")
+            }
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Token valido.",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Token invalido ou expirado.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> validateUserAccessToken(HttpServletRequest request) {
+        String accessToken = AccessTokenResolver.resolve(request);
+
+        if (accessToken == null || !tokenService.isValidUserAccessToken(accessToken)) {
+            throw new InvalidTokenException();
+        }
+
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/refresh")

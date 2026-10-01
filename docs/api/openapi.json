@@ -912,6 +912,39 @@
         ]
       }
     },
+    "/users/validate": {
+      "get": {
+        "tags": [
+          "Public Project Users"
+        ],
+        "summary": "Valida access token de usuario final",
+        "description": "Valida o access token de usuario final de projeto enviado no header Authorization ou no cookie access-token.",
+        "operationId": "validateUserAccessToken",
+        "responses": {
+          "200": {
+            "description": "Token valido."
+          },
+          "401": {
+            "description": "Token invalido ou expirado.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
     "/users": {
       "post": {
         "tags": [
@@ -2603,6 +2636,39 @@
           },
           "409": {
             "description": "Ja existe projeto conflitante para a conta.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "accessTokenCookie": []
+          }
+        ]
+      }
+    },
+    "/auth/validate": {
+      "get": {
+        "tags": [
+          "Account Authentication"
+        ],
+        "summary": "Valida access token de conta proprietaria",
+        "description": "Valida o access token de conta enviado no header Authorization ou no cookie access-token.",
+        "operationId": "validateAccountAccessToken",
+        "responses": {
+          "200": {
+            "description": "Token valido."
+          },
+          "401": {
+            "description": "Token invalido ou expirado.",
             "content": {
               "*/*": {
                 "schema": {
@@ -5414,7 +5480,7 @@
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "description": "JWT de conta proprietaria enviado no header Authorization: Bearer <token>. O token carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.",
+        "description": "JWT de access token enviado no header Authorization: Bearer <token>. Endpoints de conta aceitam tokens de conta; endpoints de usuarios finais aceitam tokens de usuario de projeto. O token carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.",
         "scheme": "bearer",
         "bearerFormat": "JWT"
       },
@@ -5426,7 +5492,7 @@
       },
       "accessTokenCookie": {
         "type": "apiKey",
-        "description": "Cookie HTTP-only usado pelo fluxo web para autenticacao. O JWT carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.",
+        "description": "Cookie HTTP-only usado pelo fluxo web para autenticacao. O JWT pode representar uma conta ou um usuario final de projeto, carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.",
         "name": "access-token",
         "in": "cookie"
       },

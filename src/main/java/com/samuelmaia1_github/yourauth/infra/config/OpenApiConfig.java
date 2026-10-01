@@ -32,7 +32,7 @@ public class OpenApiConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("JWT de conta proprietaria enviado no header Authorization: Bearer <token>. O token carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.")
+                                        .description("JWT de access token enviado no header Authorization: Bearer <token>. Endpoints de conta aceitam tokens de conta; endpoints de usuarios finais aceitam tokens de usuario de projeto. O token carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.")
                         )
                         .addSecuritySchemes(
                                 "projectApiKey",
@@ -48,7 +48,7 @@ public class OpenApiConfig {
                                         .type(SecurityScheme.Type.APIKEY)
                                         .in(SecurityScheme.In.COOKIE)
                                         .name("access-token")
-                                        .description("Cookie HTTP-only usado pelo fluxo web para autenticacao. O JWT carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.")
+                                        .description("Cookie HTTP-only usado pelo fluxo web para autenticacao. O JWT pode representar uma conta ou um usuario final de projeto, carrega sessionId e e aceito apenas enquanto a sessao persistida estiver ativa.")
                         )
                         .addSecuritySchemes(
                                 "refreshTokenCookie",

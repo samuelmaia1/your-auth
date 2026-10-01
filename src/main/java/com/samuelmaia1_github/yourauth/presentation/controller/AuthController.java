@@ -1,6 +1,8 @@
 package com.samuelmaia1_github.yourauth.presentation.controller;
 
 import com.samuelmaia1_github.yourauth.domain.auth.AccountAuthService;
+import com.samuelmaia1_github.yourauth.domain.auth.TokenService;
+import com.samuelmaia1_github.yourauth.domain.auth.exceptions.InvalidTokenException;
 import com.samuelmaia1_github.yourauth.domain.social.SocialLoginService;
 import com.samuelmaia1_github.yourauth.presentation.dto.account.AccountResponseDTO;
 import com.samuelmaia1_github.yourauth.presentation.dto.auth.AccountLoginSessionDTO;
@@ -45,10 +47,16 @@ public class AuthController {
 
     private final AccountAuthService service;
     private final SocialLoginService socialLoginService;
+    private final TokenService tokenService;
 
-    public AuthController(AccountAuthService service, SocialLoginService socialLoginService) {
+    public AuthController(
+            AccountAuthService service,
+            SocialLoginService socialLoginService,
+            TokenService tokenService
+    ) {
         this.service = service;
         this.socialLoginService = socialLoginService;
+        this.tokenService = tokenService;
     }
 
     @PostMapping("/login")
@@ -337,6 +345,37 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .body(loginData.account());
+    }
+
+    @GetMapping("/validate")
+    @Operation(
+            summary = "Valida access token de conta proprietaria",
+            description = "Valida o access token de conta enviado no header Authorization ou no cookie access-token.",
+            security = {
+                    @SecurityRequirement(name = "bearerAuth"),
+                    @SecurityRequirement(name = "accessTokenCookie")
+            }
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Token valido.",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Token invalido ou expirado.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> validateAccountAccessToken(HttpServletRequest request) {
+        String accessToken = AccessTokenResolver.resolve(request);
+
+        if (accessToken == null || !tokenService.isValidAccountAccessToken(accessToken)) {
+            throw new InvalidTokenException();
+        }
+
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/refresh")
